@@ -5,6 +5,9 @@ const path       = require('path');
 const crypto     = require('crypto');
 const fs         = require('fs');
 const dns        = require('dns');
+if (typeof dns.setDefaultResultOrder === 'function') {
+    dns.setDefaultResultOrder('ipv4first');
+}
 const bcrypt     = require('bcryptjs');
 const jwt        = require('jsonwebtoken');
 const db         = require('./db');
@@ -365,8 +368,10 @@ function renderVerificationResult(result) {
       <p>Please contact Qalam Aid for assistance.</p></body></html>`;
 }
 
-// ── Email helper (Gmail SMTP) ─────────────────────────────────
+// ── Email helper (Gmail SMTP locally, Gmail API on Railway) ───
 let mailTransporter = null;
+let mailTransporterPromise = null;
+let gmailAccessTokenCache = null;
 
 function getEmailCredentials() {
     const user = String(process.env.EMAIL_USER || '').trim();
@@ -374,32 +379,205 @@ function getEmailCredentials() {
     return { user, pass };
 }
 
-function createMailTransporter() {
+function getMailjetConfig() {
+    return {
+        apiKey: String(process.env.MAILJET_API_KEY || process.env.MJ_APIKEY_PUBLIC || '').trim(),
+        secretKey: String(process.env.MAILJET_SECRET_KEY || process.env.MJ_APIKEY_PRIVATE || '').trim(),
+        fromEmail: String(process.env.MAILJET_FROM_EMAIL || process.env.EMAIL_USER || '').trim(),
+        fromName: String(process.env.MAILJET_FROM_NAME || 'Qalam Aid').trim(),
+        sandboxMode: String(process.env.MAILJET_SANDBOX_MODE || '').toLowerCase() === 'true'
+    };
+}
+
+function isMailjetConfigured() {
+    const { apiKey, secretKey, fromEmail } = getMailjetConfig();
+    return Boolean(apiKey && secretKey && fromEmail);
+}
+
+async function sendEmailViaMailjet(to, subject, html, attachments = []) {
+    const { apiKey, secretKey, fromEmail, fromName, sandboxMode } = getMailjetConfig();
+    if (!apiKey || !secretKey) throw new Error('Mailjet credentials missing (set MAILJET_API_KEY and MAILJET_SECRET_KEY)');
+    if (!fromEmail) throw new Error('Mailjet sender missing (set MAILJET_FROM_EMAIL to a verified sender)');
+
+    const totalAttachMb = attachments.reduce((sum, a) => sum + (a.content?.length || 0), 0) / (1024 * 1024);
+    if (totalAttachMb > 14) {
+        throw new Error(`Attachments too large (${totalAttachMb.toFixed(1)} MB). Mailjet attachments should stay under 15 MB total.`);
+    }
+
+    const textPart = String(html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    const message = {
+        From: { Email: fromEmail, Name: fromName },
+        To: [{ Email: String(to).trim() }],
+        Subject: subject,
+        HTMLPart: html,
+        TextPart: textPart
+    };
+
+    if (attachments.length) {
+        message.Attachments = attachments.map((a) => ({
+            ContentType: a.contentType || 'application/octet-stream',
+            Filename: a.filename || 'attachment',
+            Base64Content: Buffer.from(a.content || '').toString('base64')
+        }));
+    }
+
+    const auth = Buffer.from(`${apiKey}:${secretKey}`).toString('base64');
+    const res = await fetch('https://api.mailjet.com/v3.1/send', {
+        method: 'POST',
+        headers: {
+            Authorization: `Basic ${auth}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            SandboxMode: sandboxMode,
+            Messages: [message]
+        })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+        const err = data.ErrorMessage || data.Messages?.[0]?.Errors?.[0]?.ErrorMessage || `Mailjet HTTP ${res.status}`;
+        throw new Error(err);
+    }
+
+    const mailjetMessage = data.Messages?.[0];
+    if (mailjetMessage?.Status && mailjetMessage.Status !== 'success') {
+        const err = mailjetMessage.Errors?.[0]?.ErrorMessage || `Mailjet status: ${mailjetMessage.Status}`;
+        throw new Error(err);
+    }
+
+    return data;
+}
+
+function isRailwayDeploy() {
+    return Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID);
+}
+
+function getGmailOAuthConfig() {
+    return {
+        clientId: String(process.env.GMAIL_CLIENT_ID || '').trim(),
+        clientSecret: String(process.env.GMAIL_CLIENT_SECRET || '').trim(),
+        refreshToken: String(process.env.GMAIL_REFRESH_TOKEN || '').trim()
+    };
+}
+
+function isGmailApiConfigured() {
+    const { clientId, clientSecret, refreshToken } = getGmailOAuthConfig();
+    return Boolean(clientId && clientSecret && refreshToken);
+}
+
+function shouldUseGmailApi() {
+    if (!isGmailApiConfigured()) return false;
+    if (process.env.EMAIL_USE_GMAIL_API === 'true') return true;
+    if (process.env.EMAIL_USE_GMAIL_API === 'false') return false;
+    return isRailwayDeploy();
+}
+
+async function getGmailAccessToken() {
+    if (gmailAccessTokenCache && gmailAccessTokenCache.expiresAt > Date.now() + 60_000) {
+        return gmailAccessTokenCache.token;
+    }
+
+    const { clientId, clientSecret, refreshToken } = getGmailOAuthConfig();
+    const res = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+            client_id: clientId,
+            client_secret: clientSecret,
+            refresh_token: refreshToken,
+            grant_type: 'refresh_token'
+        })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+        throw new Error(data.error_description || data.error || 'Gmail OAuth token request failed');
+    }
+
+    gmailAccessTokenCache = {
+        token: data.access_token,
+        expiresAt: Date.now() + (Number(data.expires_in) || 3600) * 1000
+    };
+    return gmailAccessTokenCache.token;
+}
+
+async function buildRawMimeEmail(mailOptions) {
+    const MailComposer = require('nodemailer/lib/mail-composer');
+    const message = await new MailComposer(mailOptions).compile().build();
+    return Buffer.from(message)
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+}
+
+async function sendEmailViaGmailApi(to, subject, html, attachments = []) {
+    const { user } = getEmailCredentials();
+    if (!user) throw new Error('EMAIL_USER is required for Gmail API');
+
+    const totalAttachMb = attachments.reduce((sum, a) => sum + (a.content?.length || 0), 0) / (1024 * 1024);
+    if (totalAttachMb > 22) {
+        throw new Error(`Attachments too large (${totalAttachMb.toFixed(1)} MB). Limit is ~25 MB.`);
+    }
+
+    const accessToken = await getGmailAccessToken();
+    const raw = await buildRawMimeEmail({
+        from: `"Qalam Aid" <${user}>`,
+        to,
+        subject,
+        html,
+        attachments: attachments.map((a) => ({
+            filename: a.filename || 'attachment',
+            content: a.content,
+            contentType: a.contentType
+        }))
+    });
+
+    const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ raw })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+        throw new Error(data.error?.message || `Gmail API HTTP ${res.status}`);
+    }
+}
+
+async function createMailTransporter() {
     const nodemailer = require('nodemailer');
     const { user, pass } = getEmailCredentials();
+    const hostname = process.env.EMAIL_HOST || 'smtp.gmail.com';
     const port = Number(process.env.EMAIL_PORT || 465);
     const useSsl = port === 465;
     return nodemailer.createTransport({
-        host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+        host: hostname,
         port,
         secure: useSsl,
         requireTLS: !useSsl,
         auth: { user, pass },
         pool: false,
-        family: 4,
-        lookup: (hostname, options, callback) => {
-            dns.lookup(hostname, { family: 4 }, callback);
+        tls: {
+            minVersion: 'TLSv1.2',
+            rejectUnauthorized: true,
+            servername: hostname
         },
-        tls: { minVersion: 'TLSv1.2', rejectUnauthorized: true },
         connectionTimeout: 60000,
         greetingTimeout: 30000,
         socketTimeout: 120000
     });
 }
 
-function getMailTransporter() {
-    if (!mailTransporter) mailTransporter = createMailTransporter();
-    return mailTransporter;
+async function getMailTransporter() {
+    if (!mailTransporterPromise) {
+        mailTransporterPromise = createMailTransporter().then((t) => {
+            mailTransporter = t;
+            return t;
+        });
+    }
+    return mailTransporterPromise;
 }
 
 function resetMailTransporter() {
@@ -407,41 +585,51 @@ function resetMailTransporter() {
         mailTransporter.close().catch(() => {});
     }
     mailTransporter = null;
+    mailTransporterPromise = null;
 }
 
 async function verifyMailConnection() {
     const { user, pass } = getEmailCredentials();
+
+    if (isMailjetConfigured()) {
+        return { ok: true, provider: 'mailjet' };
+    }
+
+    if (shouldUseGmailApi()) {
+        if (!user) return { ok: false, error: 'EMAIL_USER not set in .env' };
+        try {
+            await getGmailAccessToken();
+            return { ok: true, provider: 'gmail-api' };
+        } catch (err) {
+            return { ok: false, error: err.message, provider: 'gmail-api' };
+        }
+    }
+
     if (!user || !pass || pass === 'your_16_char_app_password') {
         return { ok: false, error: 'EMAIL_USER / EMAIL_PASS not set in .env' };
     }
     try {
-        const t = createMailTransporter();
+        const t = await createMailTransporter();
         await t.verify();
         mailTransporter = t;
-        return { ok: true };
+        mailTransporterPromise = Promise.resolve(t);
+        return { ok: true, provider: 'smtp' };
     } catch (err) {
         resetMailTransporter();
-        return { ok: false, error: err.message };
+        return { ok: false, error: err.message, provider: 'smtp' };
     }
 }
 
-async function sendEmail(to, subject, html, options = {}) {
-    const { attachments = [], throwOnError = false } = options;
+async function sendEmailViaSmtp(to, subject, html, attachments = []) {
     const { user, pass } = getEmailCredentials();
 
     if (!user || !pass || pass === 'your_16_char_app_password') {
-        const msg = 'Email not configured (set EMAIL_USER and EMAIL_PASS in .env)';
-        console.log(`📧 Email skipped → To: ${to} | Subject: ${subject}`);
-        if (throwOnError) throw new Error(msg);
-        return { sent: false, error: msg };
+        throw new Error('Email not configured (set EMAIL_USER and EMAIL_PASS)');
     }
 
     const totalAttachMb = attachments.reduce((sum, a) => sum + (a.content?.length || 0), 0) / (1024 * 1024);
     if (totalAttachMb > 22) {
-        const msg = `Attachments too large (${totalAttachMb.toFixed(1)} MB). Gmail limit is ~25 MB total.`;
-        console.log(`⚠️ ${msg}`);
-        if (throwOnError) throw new Error(msg);
-        return { sent: false, error: msg };
+        throw new Error(`Attachments too large (${totalAttachMb.toFixed(1)} MB). Limit is ~25 MB.`);
     }
 
     const mailOptions = {
@@ -455,14 +643,14 @@ async function sendEmail(to, subject, html, options = {}) {
     let lastError = null;
     for (let attempt = 1; attempt <= 2; attempt++) {
         try {
-            await getMailTransporter().sendMail(mailOptions);
-            console.log(`✅ Email sent to ${to}` + (attachments.length ? ` (${attachments.length} attachment(s))` : ''));
-            return { sent: true };
+            const t = await getMailTransporter();
+            await t.sendMail(mailOptions);
+            return;
         } catch (err) {
             lastError = err;
             const retryable = /socket|timeout|ECONNRESET|ETIMEDOUT|ENETUNREACH|closed/i.test(err.message);
             if (attempt < 2 && retryable) {
-                console.log(`⚠️ Email attempt ${attempt} failed (${err.message}), retrying…`);
+                console.log(`⚠️ SMTP attempt ${attempt} failed (${err.message}), retrying…`);
                 resetMailTransporter();
                 await new Promise((r) => setTimeout(r, 1500));
                 continue;
@@ -470,10 +658,60 @@ async function sendEmail(to, subject, html, options = {}) {
             break;
         }
     }
+    throw lastError;
+}
 
-    console.log(`⚠️ Email failed: ${lastError.message}`);
-    if (throwOnError) throw lastError;
-    return { sent: false, error: lastError.message };
+async function sendEmail(to, subject, html, options = {}) {
+    const { attachments = [], throwOnError = false } = options;
+
+    if (!isMailjetConfigured()) {
+        const msg = 'Email not configured (set MAILJET_API_KEY, MAILJET_SECRET_KEY, and MAILJET_FROM_EMAIL in .env)';
+        console.log(`Email skipped -> To: ${to} | Subject: ${subject}`);
+        if (throwOnError) throw new Error(msg);
+        return { sent: false, error: msg };
+    }
+
+    try {
+        await sendEmailViaMailjet(to, subject, html, attachments);
+        console.log(`Email sent via Mailjet to ${to}` + (attachments.length ? ` (${attachments.length} attachment(s))` : ''));
+        return { sent: true };
+    } catch (err) {
+        console.log(`Email failed: ${err.message}`);
+        if (throwOnError) throw err;
+        return { sent: false, error: err.message };
+    }
+
+    const { user, pass } = getEmailCredentials();
+    const useApi = shouldUseGmailApi();
+
+    if (useApi) {
+        if (!user) {
+            const msg = 'EMAIL_USER is required for Gmail API';
+            console.log(`📧 Email skipped → To: ${to} | Subject: ${subject}`);
+            if (throwOnError) throw new Error(msg);
+            return { sent: false, error: msg };
+        }
+    } else if (!user || !pass || pass === 'your_16_char_app_password') {
+        const msg = 'Email not configured (set EMAIL_USER and EMAIL_PASS in .env)';
+        console.log(`📧 Email skipped → To: ${to} | Subject: ${subject}`);
+        if (throwOnError) throw new Error(msg);
+        return { sent: false, error: msg };
+    }
+
+    try {
+        if (useApi) {
+            await sendEmailViaGmailApi(to, subject, html, attachments);
+            console.log(`✅ Email sent via Gmail API to ${to}` + (attachments.length ? ` (${attachments.length} attachment(s))` : ''));
+        } else {
+            await sendEmailViaSmtp(to, subject, html, attachments);
+            console.log(`✅ Email sent via Gmail SMTP to ${to}` + (attachments.length ? ` (${attachments.length} attachment(s))` : ''));
+        }
+        return { sent: true };
+    } catch (err) {
+        console.log(`⚠️ Email failed: ${err.message}`);
+        if (throwOnError) throw err;
+        return { sent: false, error: err.message };
+    }
 }
 
 function buildUniversityVerificationHtml(data) {
@@ -1029,7 +1267,12 @@ app.get('/api/student-dashboard', async (req, res) => {
                    COALESCE(SUM(d.amount),0) as amountRaised
             FROM users u
             JOIN students s ON s.user_id = u.id
-            JOIN applications a ON a.student_id = s.id
+            LEFT JOIN applications a ON a.id = (
+                SELECT a2.id FROM applications a2
+                WHERE a2.student_id = s.id
+                ORDER BY a2.submitted_at DESC, a2.id DESC
+                LIMIT 1
+            )
             LEFT JOIN donations d ON d.application_id = a.id AND d.status = 'completed'
             WHERE u.email = ?
             GROUP BY u.id, s.id, a.id
@@ -1702,17 +1945,26 @@ async function startServer() {
 
     app.listen(process.env.PORT, async () => {
         console.log(`✅ Server running on port ${process.env.PORT}`);
-        const { user } = getEmailCredentials();
-        if (!user) {
-            console.log('📧 Email configured: No — emails will be skipped');
-            return;
-        }
         const check = await verifyMailConnection();
-        if (check.ok) {
-            console.log(`📧 Email configured: Yes (SMTP verified for ${user})`);
+        if (check.ok && check.provider === 'mailjet') {
+            console.log(`Email configured: Yes (Mailjet Send API for ${getMailjetConfig().fromEmail})`);
+        } else if (check.ok && check.provider === 'gmail-api') {
+            console.log(`📧 Email configured: Yes (Gmail API over HTTPS for ${getEmailCredentials().user})`);
+        } else if (check.ok) {
+            console.log(`📧 Email configured: Yes (Gmail SMTP for ${getEmailCredentials().user})`);
+        } else if (isRailwayDeploy() && !isGmailApiConfigured()) {
+            console.log(`📧 Email configured: SMTP blocked on Railway Hobby/Free (${check.error})`);
+            console.log('   → Railway blocks ports 465/587. Use Gmail API (HTTPS) or upgrade to Pro for SMTP.');
+            console.log('   → Set GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN on Railway.');
+        } else if (getEmailCredentials().user) {
+            console.log(`📧 Email configured: Yes, but verify failed: ${check.error}`);
+            if (check.provider === 'gmail-api') {
+                console.log('   → Check GMAIL_CLIENT_ID / GMAIL_CLIENT_SECRET / GMAIL_REFRESH_TOKEN on Railway.');
+            } else {
+                console.log('   → Use a Gmail App Password (Google Account → Security → App passwords).');
+            }
         } else {
-            console.log(`📧 Email configured: Yes, but SMTP verify failed: ${check.error}`);
-            console.log('   → Using Gmail SMTP port 465 (SSL) over IPv4. Check EMAIL_USER / EMAIL_PASS on Railway.');
+            console.log('📧 Email configured: No — set EMAIL_USER and EMAIL_PASS in backend/.env');
         }
     });
 }
