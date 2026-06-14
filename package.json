@@ -2,6 +2,7 @@
   "name": "qalam-aid",
   "private": true,
   "scripts": {
+    "start": "npm start --prefix backend",
     "serve": "npx --yes serve frontend -l 3000",
     "api": "npm start --prefix backend",
     "start:backend": "npm start --prefix backend"
