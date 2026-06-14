@@ -207,8 +207,8 @@ async function loadDashboard() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.message);
         renderDashboard(data, false);
-    } catch {
-        renderDashboard(getDemoData(), true);
+    } catch (err) {
+        renderDashboardError(err.message || 'Could not load your donor dashboard.');
     }
 }
 
@@ -233,6 +233,23 @@ function getDemoData() {
 }
 
 /* ── Render ── */
+function renderDashboardError(message) {
+    document.getElementById('mainContent').innerHTML = `
+        <div class="offline-chip">
+            Could not load live donor data. ${message}
+        </div>
+        <div class="card">
+            <div class="card-title">Next Step</div>
+            <p style="color:var(--muted);line-height:1.7;margin:0 0 18px;">
+                Make sure the backend is running and that you are signed in with a donor account.
+            </p>
+            <a href="browsestudents.html" style="display:inline-block;background:var(--green);color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700;">
+                Browse Students
+            </a>
+        </div>
+    `;
+}
+
 function renderDashboard(d, isOffline) {
     const initials = (d.name || '?').split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
     document.getElementById('sidebarInitials').innerText = initials;
