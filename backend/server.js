@@ -1,10 +1,12 @@
+const dns        = require('dns');
+dns.setDefaultResultOrder('ipv4first');
+
 const express    = require('express');
 const cors       = require('cors');
 const multer     = require('multer');
 const path       = require('path');
 const crypto     = require('crypto');
 const fs         = require('fs');
-const dns        = require('dns');
 const bcrypt     = require('bcryptjs');
 const jwt        = require('jsonwebtoken');
 const db         = require('./db');
