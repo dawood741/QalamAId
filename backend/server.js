@@ -376,11 +376,13 @@ function getEmailCredentials() {
 function createMailTransporter() {
     const nodemailer = require('nodemailer');
     const { user, pass } = getEmailCredentials();
+    const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
+    const smtpSecure = process.env.SMTP_SECURE === 'true' || smtpPort === 465;
     return nodemailer.createTransport({
         host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
-        requireTLS: true,
+        port: smtpPort,
+        secure: smtpSecure,
+        requireTLS: !smtpSecure,
         auth: { user, pass },
         pool: false,
         tls: { minVersion: 'TLSv1.2', rejectUnauthorized: true },
