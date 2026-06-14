@@ -4,6 +4,7 @@ const multer     = require('multer');
 const path       = require('path');
 const crypto     = require('crypto');
 const fs         = require('fs');
+const dns        = require('dns');
 const bcrypt     = require('bcryptjs');
 const jwt        = require('jsonwebtoken');
 const db         = require('./db');
@@ -376,13 +377,19 @@ function getEmailCredentials() {
 function createMailTransporter() {
     const nodemailer = require('nodemailer');
     const { user, pass } = getEmailCredentials();
+    const port = Number(process.env.EMAIL_PORT || 465);
+    const useSsl = port === 465;
     return nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
-        requireTLS: true,
+        host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+        port,
+        secure: useSsl,
+        requireTLS: !useSsl,
         auth: { user, pass },
         pool: false,
+        family: 4,
+        lookup: (hostname, options, callback) => {
+            dns.lookup(hostname, { family: 4 }, callback);
+        },
         tls: { minVersion: 'TLSv1.2', rejectUnauthorized: true },
         connectionTimeout: 60000,
         greetingTimeout: 30000,
@@ -453,7 +460,7 @@ async function sendEmail(to, subject, html, options = {}) {
             return { sent: true };
         } catch (err) {
             lastError = err;
-            const retryable = /socket|timeout|ECONNRESET|ETIMEDOUT|closed/i.test(err.message);
+            const retryable = /socket|timeout|ECONNRESET|ETIMEDOUT|ENETUNREACH|closed/i.test(err.message);
             if (attempt < 2 && retryable) {
                 console.log(`⚠️ Email attempt ${attempt} failed (${err.message}), retrying…`);
                 resetMailTransporter();
@@ -1655,11 +1662,32 @@ app.post('/api/auth/change-password', async (req, res) => {
 });
 
 // ── Frontend (static HTML) ───────────────────────────────────
-const FRONTEND_DIR = path.join(__dirname, '..', 'frontend');
-app.use(express.static(FRONTEND_DIR));
-app.get('/', (req, res) => {
-    res.sendFile(path.join(FRONTEND_DIR, 'index.html'));
-});
+function resolveFrontendDir() {
+    const candidates = [
+        path.join(__dirname, '..', 'frontend'),
+        path.join(process.cwd(), 'frontend'),
+        path.join(__dirname, 'frontend')
+    ];
+    for (const dir of candidates) {
+        if (fs.existsSync(path.join(dir, 'index.html'))) return dir;
+    }
+    return null;
+}
+
+const FRONTEND_DIR = resolveFrontendDir();
+
+if (FRONTEND_DIR) {
+    console.log('🌐 Serving frontend from:', FRONTEND_DIR);
+    app.use(express.static(FRONTEND_DIR));
+    app.get('/', (req, res) => {
+        res.sendFile(path.join(FRONTEND_DIR, 'index.html'));
+    });
+} else {
+    console.log('⚠️ Frontend folder not found — API only. Set Railway Root Directory to repo root (not backend/).');
+    app.get('/', (req, res) => {
+        res.json({ ok: true, message: 'Qalam Aid API is running. Deploy the full repo to serve the website.' });
+    });
+}
 
 // ── Start server ─────────────────────────────────────────────
 async function startServer() {
@@ -1684,7 +1712,7 @@ async function startServer() {
             console.log(`📧 Email configured: Yes (SMTP verified for ${user})`);
         } else {
             console.log(`📧 Email configured: Yes, but SMTP verify failed: ${check.error}`);
-            console.log('   → Regenerate Gmail app password, check 2FA, and ensure EMAIL_PASS has no extra spaces');
+            console.log('   → Using Gmail SMTP port 465 (SSL) over IPv4. Check EMAIL_USER / EMAIL_PASS on Railway.');
         }
     });
 }
