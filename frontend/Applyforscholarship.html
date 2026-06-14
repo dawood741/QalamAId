@@ -437,6 +437,7 @@
     </form>
 </div>
 
+<script src="js/config.js"></script>
 <script>
     // Helper to show field-level error
     function showFieldError(fieldId, message) {
@@ -720,7 +721,7 @@
     btn.innerText = 'Submitting... please wait';
 
     try {
-        const res  = await fetch('http://localhost:5000/api/apply', {
+        const res  = await fetch(`${window.QALAM_API_BASE}/api/apply`, {
             method: 'POST',
             body: formData
         });
@@ -749,7 +750,7 @@
 
     } catch (err) {
         alert(
-            '❌ Could not reach the API at http://localhost:5000\n\n' +
+            `❌ Could not reach the API at ${window.QALAM_API_BASE}\n\n` +
             (err.message || 'Network error') + '\n\n' +
             '• Backend must run: cd backend → npm start\n' +
             '• Each uploaded file must be under 25 MB'

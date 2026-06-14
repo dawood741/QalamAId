@@ -252,13 +252,14 @@
 
     </div>
 
+    <script src="js/config.js"></script>
     <script>
         let allStudents = [];
 
         // Load students from backend
         async function loadStudents() {
             try {
-                const res  = await fetch('http://localhost:5000/api/students');
+                const res  = await fetch(`${window.QALAM_API_BASE}/api/students`);
                 const data = await res.json();
                 allStudents = data;
                 renderStudents(allStudents);

@@ -700,6 +700,7 @@
     </div>
 </div>
 
+<script src="js/config.js"></script>
 <script>
     // State
     let currentAmount    = 0;
@@ -825,7 +826,7 @@
     // Notify backend after success
     async function notifyBackend() {
         try {
-            const res = await fetch('http://localhost:5000/api/sandbox/payment-success', {
+            const res = await fetch(`${window.QALAM_API_BASE}/api/sandbox/payment-success`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

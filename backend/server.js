@@ -7,7 +7,7 @@ const fs         = require('fs');
 const bcrypt     = require('bcryptjs');
 const jwt        = require('jsonwebtoken');
 const db         = require('./db');
-require('dotenv').config();
+require('dotenv').config({ override: false });
 
 const app = express();
 app.use(cors({ origin: '*' }));
@@ -616,8 +616,8 @@ async function sendUniversityVerificationEmail(applicationId) {
 }
 
 // ── Test route ──────────────────────────────────────────────
-app.get('/', (req, res) => {
-    res.send('Qalam Aid backend is running!');
+app.get('/api/health', (req, res) => {
+    res.json({ ok: true, message: 'Qalam Aid backend is running!' });
 });
 
 // ── Scholarship application route ───────────────────────────
@@ -1654,13 +1654,21 @@ app.post('/api/auth/change-password', async (req, res) => {
     }
 });
 
+// ── Frontend (static HTML) ───────────────────────────────────
+const FRONTEND_DIR = path.join(__dirname, '..', 'frontend');
+app.use(express.static(FRONTEND_DIR));
+app.get('/', (req, res) => {
+    res.sendFile(path.join(FRONTEND_DIR, 'index.html'));
+});
+
 // ── Start server ─────────────────────────────────────────────
 async function startServer() {
     try {
         await ensureDocumentsTable();
         console.log('✅ application_documents table ready');
     } catch (err) {
-        console.error('❌ Could not ensure application_documents table:', err.message);
+        console.error('❌ Could not ensure application_documents table:', err.message || err);
+        console.error('   DB host:', process.env.DB_HOST || process.env.MYSQLHOST || '(not set)');
         process.exit(1);
     }
 

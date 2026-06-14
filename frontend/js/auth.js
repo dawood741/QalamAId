@@ -2,7 +2,7 @@
  * Qalam Aid — shared auth helpers for login / signup pages
  */
 const QalamAuth = (function () {
-    const API_BASE = 'http://localhost:5000';
+    const API_BASE = window.QALAM_API_BASE || window.location.origin;
 
     const ROLES = {
         student: {

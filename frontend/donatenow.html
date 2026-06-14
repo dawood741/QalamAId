@@ -1249,6 +1249,7 @@
     </div>
 </div>
 
+<script src="js/config.js"></script>
 <script>
     // ── Global State ──────────────────────────────────────────
     let selectedAmount   = 0;
@@ -1274,7 +1275,7 @@
     // ── Load verified students ────────────────────────────────
     async function loadStudents() {
         try {
-            const res  = await fetch('http://localhost:5000/api/students');
+            const res  = await fetch(`${window.QALAM_API_BASE}/api/students`);
             const data = await res.json();
             const sel  = document.getElementById('studentSelect');
             sel.innerHTML = '<option value="">— Select a student —</option>';
@@ -1348,7 +1349,7 @@
         };
 
         try {
-            const res  = await fetch('http://localhost:5000/api/donate', {
+            const res  = await fetch(`${window.QALAM_API_BASE}/api/donate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -1515,7 +1516,7 @@
 
     async function epNotifyBackend() {
         try {
-            const res  = await fetch('http://localhost:5000/api/sandbox/payment-success', {
+            const res  = await fetch(`${window.QALAM_API_BASE}/api/sandbox/payment-success`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

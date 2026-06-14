@@ -184,8 +184,9 @@
     </div>
 </div>
 
+<script src="js/config.js"></script>
 <script>
-const API = 'http://localhost:5000';
+const API = window.QALAM_API_BASE || window.location.origin;
 
 document.getElementById('topbarDate').innerText = new Date().toLocaleDateString('en-PK', {
     weekday:'long', year:'numeric', month:'long', day:'numeric'
