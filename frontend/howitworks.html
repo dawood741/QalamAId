@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How It Works</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f9f9f9;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .navbar .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .navbar .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .navbar .buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .navbar .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .navbar .btn-primary {
+            background-color:#00796b;
+            color: #fff;
+        }
+
+        .navbar .btn-secondary {
+            background-color: #f0f0f0;
+            color: #333;
+        } 
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-links">
+                   
+            <a href="about.html">About Us</a>
+                               
+            <a href="browsestudents.html">Browse Students</a>
+             
+            <a href="contact.html">Contact</a>
+        </div>
+        <div class="buttons">
+            <button class="btn btn-primary"onclick="location.href='Applyforscholarship.html'" >Apply Now</button>
+            <button class="btn btn-secondary"onclick="location.href='donatenow.html'">Donate</button>
+        </div>
+    </nav>
+
+    <header class="header-banner">
+        <h1>How It Works</h1>
+        <p>A simple, transparent process for both students and donors.</p>
+    </header>
+
+    <main class="content">
+        <div class="section-title">For Students</div>
+        <div class="process-container">
+            <div class="process-step">
+                <i>📄</i>
+                <h3>Submit Application</h3>
+                <p>Fill out the application form with your personal info, university details, and upload required documents.</p>
+            </div>
+            <div class="process-step">
+                <i>✅</i>
+                <h3>Get Verified</h3>
+                <p>Our team reviews and verifies your application, university enrollment, and financial need.</p>
+            </div>
+            <div class="process-step">
+                <i>💵</i>
+                <h3>Receive Funding</h3>
+                <p>Once verified, donors can contribute to your scholarship. Funds are sent directly to your university.</p>
+            </div>
+            <div class="process-step">
+                <i>🚀</i>
+                <h3>Pursue Your Dream</h3>
+                <p>Continue your education and share progress updates with your supporters.</p>
+            </div>
+        </div>
+
+        <div class="section-title">For Donors</div>
+        <div class="process-container">
+            <div class="process-step">
+                <i>👀</i>
+                <h3>Browse Students</h3>
+                <p>Browse verified student profiles, read their stories, and find simple info packages.</p>
+            </div>
+            <div class="process-step">
+                <i>❤️</i>
+                <h3>Make a Donation</h3>
+                <p>Choose a specific or recurring donation. You can fund a specific student or the general fund.</p>
+            </div>
+            <div class="process-step">
+                <i>📦</i>
+                <h3>Funds Delivered</h3>
+                <p>Your donation goes directly to the student’s university tuition, ensuring full transparency.</p>
+            </div>
+            <div class="process-step">
+                <i>📈</i>
+                <h3>Track Impact</h3>
+                <p>Receive updates on the student’s progress and see the real impact of your contribution.</p>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>

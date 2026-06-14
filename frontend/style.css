@@ -1,0 +1,404 @@
+/* Home/ index*/
+
+
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.btn {
+  padding: 12px 30px;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.apply-btn {  
+    background: burlywood;         
+  color: white;
+}
+
+.apply-btn:hover {
+  background: burlywood;        
+}
+
+.donate-btn {
+  background: rgba(255, 255, 255, 0.9);
+  color:     yellowgreen; 
+}
+
+.donate-btn:hover {
+  background: white;
+}
+
+
+/* Apply for scholarship */
+
+.container {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 20px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.header h1 {
+  color: #333;
+}
+
+.form-section {
+  margin-bottom: 20px;
+}
+
+.form-section h2 {
+  margin-top: 0;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%;
+  height: 40px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.form-group textarea {
+  height: 100px;
+}
+
+.verification-text {
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #666;
+}
+
+.scholarship-textarea {
+  margin-bottom: 20px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 600px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.upload-container {
+    text-align: center;
+    width: 400px;
+}
+
+.upload-label {
+    display: block;
+    font-size: 16px;
+    color: #333;
+}
+
+.upload-label p {
+    font-size: 14px;
+    color: #666;
+}
+
+.upload-box {
+    border: 2px dashed #ccc;
+    padding: 20px;
+    margin: 10px 0;
+    position: relative;
+    background-color: #fff;
+}
+
+.upload-box input[type="file"] {
+    opacity: 0;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    cursor: pointer;
+}
+
+.upload-icon {
+    font-size: 24px;
+    color: #888;
+    margin-bottom: 10px;
+}
+
+.upload-box p {
+    font-size: 12px;
+    color: #aaa;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.submit-btn:hover {
+    background-color: #0056b3;
+}
+
+/* Donate*/
+/* Donation Banner */
+.donation-banner {
+    background: linear-gradient(to bottom, #007579, #00796b);
+    color: #fff;
+    text-align: center;
+    padding: 50px 20px;
+}
+
+.donation-banner h1 {
+    font-size: 32px;
+    margin: 0 0 10px;
+}
+
+.donation-banner p {
+    font-size: 16px;
+    opacity: 0.9;
+}
+
+/* Donation Form */
+.donation-form {
+    max-width: 500px;
+    margin: -30px auto 50px;
+    background: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+input[type="radio"] {
+    margin-right: 5px;
+}
+
+.amount-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.amount-options button {
+    padding: 8px 15px;
+    border: 1px solid #ddd;
+    background: #f9f9f9;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+input[type="text"],
+input[type="tel"],
+input[type="number"],
+select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 12px;
+    background: #4caf50;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+/* How it works*/ 
+.header-banner {
+            background-color: #004d40;
+            color: #fff;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .header-banner h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header-banner p {
+            font-size: 14px;
+            color: #ccc;
+        }
+
+        .content {
+            padding: 40px 20px;
+            background-color: #fff;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 22px;
+            margin-bottom: 30px;
+        }
+
+        .process-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .process-step {
+            flex: 1;
+            min-width: 200px;
+            max-width: 250px;
+            text-align: center;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .process-step i {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #007bff;
+        }
+
+        .process-step h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .process-step p {
+            font-size: 12px;
+            color: #666;
+        }
+
+       /* Contact*/
+       .contact-banner {
+    background: linear-gradient(to bottom, #004d40, #00796b);
+    color: #fff;
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.contact-banner h1 {
+    font-size: 2.5rem;
+    margin: 0;
+}
+
+.contact-banner p {
+    font-size: 1.1rem;
+    margin-top: 10px;
+}
+
+/* Contact Content */
+.contact-content {
+    display: flex;
+    justify-content: space-between;
+    padding: 40px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: 40px;
+}
+
+.contact-form {
+    flex: 2;
+    background: #f9f9f9;
+    padding: 30px;
+    border-radius: 8px;
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    flex: 1;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+textarea {
+    height: 120px;
+}
+
+.send-message {
+    background: #00796b;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 1rem;
+}
+
+.contact-info {
+    flex: 1;
+    padding: 30px;
+}
+
+.contact-info h3 {
+    font-size: 1.5rem;
+    margin-top: 0;
+}
+
+.info-item {
+    margin-bottom: 20px;
+}
+
+.info-item span {
+    font-weight: bold;
+}

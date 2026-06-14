@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Qalam Aid</title>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+<div class="auth-left">
+    <div class="brand">
+        <a href="home.html">
+            <div class="brand-name">Qalam Aid</div>
+            <div class="brand-sub">Preventing dropout through dignity</div>
+        </a>
+    </div>
+    <div class="left-mid">
+        <h2 id="leftHeadline">Join as a <em>student</em></h2>
+        <p id="leftBlurb">Create your account, then apply for verified financial aid tied to your university enrollment.</p>
+    </div>
+    <div class="left-foot">&copy; 2026 Qalam Aid. All rights reserved.</div>
+</div>
+
+<div class="auth-right">
+    <div class="auth-box">
+        <a class="back-home" href="home.html">&larr; Back to home</a>
+        <h1>Create account</h1>
+        <p class="sub" id="pageSub">Register as a student on Qalam Aid</p>
+
+        <p style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:10px;">I am registering as</p>
+        <div class="role-cards">
+            <button type="button" class="role-card active" id="cardStudent" data-role="student" aria-pressed="true">
+                <div class="rc-icon">&#127891;</div>
+                <div class="rc-title">Student</div>
+                <div class="rc-desc">Need scholarship / fee support</div>
+            </button>
+            <button type="button" class="role-card" id="cardDonor" data-role="donor" aria-pressed="false">
+                <div class="rc-icon">&#128154;</div>
+                <div class="rc-title">Donor</div>
+                <div class="rc-desc">Want to fund verified students</div>
+            </button>
+        </div>
+
+        <div class="alert" id="alertBox" role="alert"></div>
+
+        <form id="signupForm" novalidate>
+            <div class="section-label">Account details</div>
+
+            <div class="row2">
+                <div class="fg">
+                    <label for="name">Full name *</label>
+                    <div class="iw"><input type="text" id="name" placeholder="Ali Hassan" autocomplete="name" required></div>
+                    <div class="err-msg" id="nameErr">Enter your full name (min 3 characters)</div>
+                </div>
+                <div class="fg">
+                    <label for="phone">Phone *</label>
+                    <div class="iw"><input type="tel" id="phone" placeholder="03xxxxxxxxx" maxlength="11" autocomplete="tel" required></div>
+                    <div class="err-msg" id="phoneErr">Enter a valid 11-digit Pakistani number (03...)</div>
+                </div>
+            </div>
+
+            <div class="fg">
+                <label for="email">Email *</label>
+                <div class="email-otp-row">
+                    <div class="iw email-otp-input"><input type="email" id="email" placeholder="you@email.com" autocomplete="email" required></div>
+                    <button type="button" class="btn-otp-send" id="sendOtpBtn">Send code</button>
+                </div>
+                <p class="otp-hint" id="otpHint">We will email a 6-digit code to verify this address before creating your account.</p>
+                <div class="err-msg" id="emailErr">Enter a valid email</div>
+            </div>
+
+            <div id="otpPanel" class="otp-panel" aria-hidden="true">
+                <div class="section-label">Email verification</div>
+                <div class="fg">
+                    <label for="otp">Verification code *</label>
+                    <div class="iw"><input type="text" id="otp" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="6-digit code" autocomplete="one-time-code"></div>
+                    <div class="err-msg" id="otpErr">Enter the 6-digit code from your email</div>
+                </div>
+                <p class="otp-status" id="otpStatus"></p>
+            </div>
+
+            <div class="row2">
+                <div class="fg">
+                    <label for="pwd">Password *</label>
+                    <div class="iw">
+                        <input type="password" id="pwd" placeholder="Min 8 characters" autocomplete="new-password" required>
+                        <button type="button" class="eye" data-target="pwd" aria-label="Show password">&#128065;</button>
+                    </div>
+                    <div class="pwd-strength" id="pwdBar"></div>
+                    <div class="pwd-hint" id="pwdHint">Use 8+ characters with letters and numbers</div>
+                    <div class="err-msg" id="pwdErr">Password must be at least 8 characters</div>
+                </div>
+                <div class="fg">
+                    <label for="pwd2">Confirm password *</label>
+                    <div class="iw">
+                        <input type="password" id="pwd2" placeholder="Repeat password" autocomplete="new-password" required>
+                        <button type="button" class="eye" data-target="pwd2" aria-label="Show password">&#128065;</button>
+                    </div>
+                    <div class="err-msg" id="pwd2Err">Passwords do not match</div>
+                </div>
+            </div>
+
+            <div id="studentPanel" class="role-panel visible">
+                <div class="section-label">University information</div>
+                <div class="row2">
+                    <div class="fg">
+                        <label for="uniName">University name *</label>
+                        <div class="iw"><input type="text" id="uniName" placeholder="e.g. NUST, LUMS"></div>
+                        <div class="err-msg" id="uniErr">Enter your university</div>
+                    </div>
+                    <div class="fg">
+                        <label for="regNum">Registration no. *</label>
+                        <div class="iw"><input type="text" id="regNum" placeholder="e.g. 2024-BCS-001"></div>
+                        <div class="err-msg" id="regErr">Enter registration number</div>
+                    </div>
+                </div>
+                <div class="row2">
+                    <div class="fg">
+                        <label for="program">Program *</label>
+                        <div class="iw">
+                            <select id="program">
+                                <option value="">Select program</option>
+                                <option>Computer Science</option>
+                                <option>Software Engineering</option>
+                                <option>Electrical Engineering</option>
+                                <option>Mechanical Engineering</option>
+                                <option>Business Administration</option>
+                                <option>Medicine / MBBS</option>
+                                <option>Pharmacy</option>
+                                <option>Economics</option>
+                                <option>Law</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                        <div class="err-msg" id="progErr">Select your program</div>
+                    </div>
+                    <div class="fg">
+                        <label for="semester">Current semester *</label>
+                        <div class="iw"><input type="text" id="semester" placeholder="e.g. 5th Semester"></div>
+                        <div class="err-msg" id="semErr">Enter your semester</div>
+                    </div>
+                </div>
+                <p style="font-size:12px;color:var(--muted);margin-top:4px;">
+                    After signup you can complete your full scholarship application from the student dashboard.
+                </p>
+            </div>
+
+            <div id="donorPanel" class="role-panel">
+                <div class="section-label">Donor profile</div>
+                <div class="fg">
+                    <label for="city">City (optional)</label>
+                    <div class="iw"><input type="text" id="city" placeholder="e.g. Lahore, Karachi"></div>
+                </div>
+                <p style="font-size:12px;color:var(--muted);margin-top:4px;">
+                    Browse verified students and donate after you sign in.
+                </p>
+            </div>
+
+            <p class="terms">
+                By creating an account you agree to Qalam Aid's terms of use and privacy policy.
+            </p>
+
+            <button type="submit" class="abtn" id="signupBtn">Create Student Account</button>
+        </form>
+
+        <p class="swl">
+            Already have an account?
+            <a href="login.html?role=student" id="loginLink">Sign in</a>
+        </p>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="js/qalam-emailjs.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/signup-page.js"></script>
+</body>
+</html>

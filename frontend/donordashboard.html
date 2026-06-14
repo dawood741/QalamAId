@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Dashboard — Qalam Aid</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --green:       #065f46;
+            --green-mid:   #047857;
+            --green-light: #d1fae5;
+            --green-pale:  #f0fdf4;
+            --amber:       #d97706;
+            --amber-light: #fef3c7;
+            --blue:        #1d4ed8;
+            --blue-light:  #dbeafe;
+            --red:         #dc2626;
+            --red-light:   #fee2e2;
+            --text:        #0f172a;
+            --muted:       #64748b;
+            --border:      #e2e8f0;
+            --card:        #ffffff;
+            --bg:          #f8fafc;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+        /* ── Sidebar ── */
+        .sidebar { position:fixed; top:0; left:0; width:240px; height:100vh; background:var(--green); display:flex; flex-direction:column; z-index:100; }
+        .sidebar-logo { padding:28px 24px 20px; border-bottom:1px solid rgba(255,255,255,0.1); }
+        .sidebar-logo h2 { color:white; font-size:20px; font-weight:700; letter-spacing:-0.3px; }
+        .sidebar-logo p  { color:rgba(255,255,255,0.55); font-size:12px; margin-top:2px; }
+        .sidebar-nav { flex:1; padding:20px 12px; overflow-y:auto; }
+        .nav-label { font-size:10px; font-weight:600; color:rgba(255,255,255,0.4); letter-spacing:1.5px; text-transform:uppercase; padding:0 12px; margin:16px 0 8px; }
+        .nav-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; color:rgba(255,255,255,0.75); text-decoration:none; font-size:14px; font-weight:500; transition:all 0.15s; }
+        .nav-item:hover  { background:rgba(255,255,255,0.1); color:white; }
+        .nav-item.active { background:rgba(255,255,255,0.18); color:white; }
+        .nav-icon { font-size:16px; width:20px; text-align:center; }
+        .sidebar-bottom { padding:16px 12px; border-top:1px solid rgba(255,255,255,0.1); }
+        .sidebar-user { display:flex; align-items:center; gap:10px; padding:10px 12px; }
+        .user-avatar { width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.22); color:white; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .user-name { color:white; font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .user-role { color:rgba(255,255,255,0.5); font-size:11px; }
+        .logout-btn { width:100%; margin-top:8px; background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.8); border:1px solid rgba(255,255,255,0.2); border-radius:8px; padding:9px 12px; font-size:13px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.15s; text-align:left; display:flex; align-items:center; gap:8px; }
+        .logout-btn:hover { background:rgba(255,255,255,0.18); color:white; }
+
+        /* ── Main ── */
+        .main { margin-left:240px; min-height:100vh; }
+        .topbar { background:white; border-bottom:1px solid var(--border); padding:16px 32px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50; }
+        .topbar-left h1 { font-size:18px; font-weight:700; }
+        .topbar-left p  { font-size:13px; color:var(--muted); margin-top:2px; }
+        .topbar-right   { font-size:13px; color:var(--muted); }
+        .content { padding:28px 32px; }
+
+        /* ── CTA Banner ── */
+        .cta-banner { background:linear-gradient(135deg, var(--green), #047857); border-radius:16px; padding:26px 32px; display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; gap:20px; flex-wrap:wrap; }
+        .cta-banner h3 { color:white; font-size:18px; margin-bottom:5px; }
+        .cta-banner p  { color:rgba(255,255,255,0.8); font-size:14px; }
+        .cta-btn { background:white; color:var(--green); border:none; padding:12px 26px; border-radius:9px; font-size:14px; font-weight:700; cursor:pointer; text-decoration:none; display:inline-block; transition:all 0.2s; white-space:nowrap; font-family:'DM Sans',sans-serif; }
+        .cta-btn:hover { background:var(--green-pale); transform:translateY(-1px); }
+
+        /* ── Stats ── */
+        .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+        .stat-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px; }
+        .stat-label { font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; }
+        .stat-value { font-size:24px; font-weight:700; font-family:'DM Mono',monospace; line-height:1.1; }
+        .stat-sub   { font-size:12px; color:var(--muted); margin-top:5px; }
+        .stat-card.green .stat-value { color:var(--green); }
+        .stat-card.amber .stat-value { color:var(--amber); }
+        .stat-card.blue  .stat-value { color:var(--blue); }
+
+        /* ── Card ── */
+        .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:24px; margin-bottom:20px; }
+        .card-title { font-size:15px; font-weight:700; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; }
+        .card-title-right { font-size:13px; color:var(--muted); font-weight:400; }
+
+        /* ── Donation Table ── */
+        .table-wrap { overflow-x:auto; }
+        .dtable { width:100%; border-collapse:collapse; min-width:600px; }
+        .dtable th { text-align:left; font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; padding:0 14px 12px; border-bottom:1px solid var(--border); }
+        .dtable td { padding:14px; font-size:14px; border-bottom:1px solid var(--border); vertical-align:middle; }
+        .dtable tr:last-child td { border-bottom:none; }
+        .dtable tr:hover td { background:var(--bg); }
+        .student-cell-name { font-weight:600; margin-bottom:2px; }
+        .student-cell-uni  { font-size:12px; color:var(--muted); }
+
+        /* ── Student Cards ── */
+        .student-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
+        .stu-card { border:1px solid var(--border); border-radius:12px; padding:18px; position:relative; overflow:hidden; }
+        .stu-card::before { content:''; position:absolute; top:0; left:0; width:4px; height:100%; background:var(--green); }
+        .stu-name { font-size:15px; font-weight:700; margin-bottom:3px; }
+        .stu-uni  { font-size:12px; color:var(--muted); margin-bottom:14px; }
+        .prog-row { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:6px; }
+        .prog-track { height:7px; background:var(--green-light); border-radius:99px; overflow:hidden; margin-bottom:12px; }
+        .prog-fill  { height:100%; background:var(--green); border-radius:99px; }
+        .stu-footer { display:flex; align-items:center; justify-content:space-between; }
+        .my-contrib { font-size:12px; color:var(--green); font-weight:600; }
+
+        /* ── Receipt Items ── */
+        .receipt-list { display:flex; flex-direction:column; gap:12px; }
+        .rcpt-item { display:flex; align-items:center; gap:14px; padding:14px 16px; background:var(--bg); border-radius:10px; border:1px solid var(--border); }
+        .rcpt-icon { width:40px; height:40px; border-radius:10px; background:var(--green-light); color:var(--green); font-size:18px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .rcpt-name { font-size:14px; font-weight:600; margin-bottom:3px; }
+        .rcpt-meta { font-size:12px; color:var(--muted); font-family:'DM Mono',monospace; }
+        .rcpt-amount { font-size:15px; font-weight:700; color:var(--green); font-family:'DM Mono',monospace; margin-bottom:4px; text-align:right; }
+
+        /* ── Badge ── */
+        .badge { display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; }
+        .badge.green     { background:var(--green-light); color:var(--green); }
+        .badge.amber     { background:var(--amber-light); color:var(--amber); }
+        .badge.blue      { background:var(--blue-light);  color:var(--blue); }
+        .badge.red       { background:var(--red-light);   color:var(--red); }
+        .badge.completed { background:var(--green-light); color:var(--green); }
+        .badge.initiated { background:var(--amber-light); color:var(--amber); }
+        .badge.failed    { background:var(--red-light);   color:var(--red); }
+
+        /* ── Empty ── */
+        .empty-state { text-align:center; padding:40px; color:var(--muted); }
+        .empty-state h3 { color:var(--text); margin-bottom:8px; font-size:15px; }
+
+        /* ── Spinner ── */
+        .spinner-wrap { text-align:center; padding:80px 40px; color:var(--muted); }
+        .spin { width:42px; height:42px; border:3px solid var(--green-light); border-top-color:var(--green); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 16px; }
+        @keyframes spin { to{transform:rotate(360deg);} }
+        .offline-chip { background:var(--amber-light); border:1px solid #fcd34d; border-radius:8px; padding:10px 16px; font-size:13px; color:#92400e; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+
+        @media(max-width:900px) { .stats-row{grid-template-columns:repeat(2,1fr);} .student-grid{grid-template-columns:1fr;} }
+        @media(max-width:768px) { .sidebar{display:none;} .main{margin-left:0;} .content{padding:20px 16px;} .topbar{padding:14px 20px;} }
+    </style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<div class="sidebar">
+    <div class="sidebar-logo">
+        <h2>Qalam Aid</h2>
+        <p>Donor Portal</p>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-label">Menu</div>
+        <a class="nav-item active" href="donordashboard.html">
+            <span class="nav-icon">📊</span> Dashboard
+        </a>
+        <a class="nav-item" href="donatenow.html">
+            <span class="nav-icon">💰</span> Donate Again
+        </a>
+        <a class="nav-item" href="browsestudents.html">
+            <span class="nav-icon">👥</span> Browse Students
+        </a>
+        <a class="nav-item" href="home.html">
+            <span class="nav-icon">🏠</span> Home
+        </a>
+    </nav>
+    <div class="sidebar-bottom">
+        <div class="sidebar-user">
+            <div class="user-avatar" id="sidebarInitials">?</div>
+            <div style="flex:1;overflow:hidden;">
+                <div class="user-name" id="sidebarName">Loading…</div>
+                <div class="user-role">Donor</div>
+            </div>
+        </div>
+        <button class="logout-btn" onclick="doLogout()">
+            <span>🚪</span> Sign Out
+        </button>
+    </div>
+</div>
+
+<!-- ── MAIN ── -->
+<div class="main">
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1>Donor Dashboard</h1>
+            <p id="topbarSub">Welcome back</p>
+        </div>
+        <div class="topbar-right" id="topbarDate"></div>
+    </div>
+
+    <div class="content" id="mainContent">
+        <div class="spinner-wrap">
+            <div class="spin"></div>
+            <p>Loading your dashboard…</p>
+        </div>
+    </div>
+</div>
+
+<script>
+const API = 'http://localhost:5000';
+
+document.getElementById('topbarDate').innerText = new Date().toLocaleDateString('en-PK', {
+    weekday:'long', year:'numeric', month:'long', day:'numeric'
+});
+
+function doLogout() {
+    localStorage.clear();
+    window.location.href = 'login.html';
+}
+
+/* ── Load from GET /api/donor-dashboard?email= ── */
+async function loadDashboard() {
+    const email = localStorage.getItem('donorEmail') || localStorage.getItem('userEmail');
+    if (!email) { window.location.href = 'login.html'; return; }
+
+    try {
+        const res  = await fetch(`${API}/api/donor-dashboard?email=${encodeURIComponent(email)}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message);
+        renderDashboard(data, false);
+    } catch {
+        renderDashboard(getDemoData(), true);
+    }
+}
+
+/* Demo mirrors exact server.js response shape */
+function getDemoData() {
+    return {
+        name:  localStorage.getItem('userName') || 'Donor',
+        email: localStorage.getItem('donorEmail') || '',
+        totalDonated:   15000,
+        totalDonations: 3,
+        studentsHelped: 2,
+        donations: [
+            { id:1, studentName:'Ali Hassan',  university:'NUST Islamabad', amount:5000,  reference:'EP-1713600000-1234', status:'completed', date:'2026-04-14T10:00:00', receipt:1 },
+            { id:2, studentName:'Fatima Khan', university:'LUMS Lahore',    amount:7000,  reference:'EP-1713700000-5678', status:'completed', date:'2026-04-15T14:30:00', receipt:0 },
+            { id:3, studentName:'Usman Tariq', university:'UET Lahore',     amount:3000,  reference:'EP-1713800000-9012', status:'initiated', date:'2026-04-16T09:15:00', receipt:0 }
+        ],
+        studentsSupported: [
+            { name:'Ali Hassan',  university:'NUST Islamabad', amountNeeded:85000,  amountRaised:35000, myDonation:5000, status:'verified' },
+            { name:'Fatima Khan', university:'LUMS Lahore',    amountNeeded:120000, amountRaised:72000, myDonation:7000, status:'verified' }
+        ]
+    };
+}
+
+/* ── Render ── */
+function renderDashboard(d, isOffline) {
+    const initials = (d.name || '?').split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
+    document.getElementById('sidebarInitials').innerText = initials;
+    document.getElementById('sidebarName').innerText     = d.name;
+    document.getElementById('topbarSub').innerText       = `Welcome back, ${d.name.split(' ')[0]}`;
+
+    /* Donation history rows */
+    const donRows = d.donations.length > 0
+        ? d.donations.map(don => `
+            <tr>
+                <td>
+                    <div class="student-cell-name">${don.studentName}</div>
+                    <div class="student-cell-uni">${don.university}</div>
+                </td>
+                <td style="font-family:'DM Mono',monospace;font-weight:700;color:var(--green);">
+                    PKR ${Number(don.amount).toLocaleString()}
+                </td>
+                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);">
+                    ${don.reference}
+                </td>
+                <td><span class="badge ${don.status}">${don.status}</span></td>
+                <td style="font-size:13px;color:var(--muted);">
+                    ${new Date(don.date).toLocaleDateString('en-PK')}
+                </td>
+                <td>
+                    ${Number(don.receipt) > 0
+                        ? `<span style="color:var(--green);font-weight:600;font-size:13px;">✅ Uploaded</span>`
+                        : `<span style="color:var(--amber);font-size:13px;">⏳ Pending</span>`}
+                </td>
+            </tr>
+        `).join('')
+        : `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted);">No donations yet — <a href="browsestudents.html" style="color:var(--green);">browse students</a></td></tr>`;
+
+    /* Student progress cards */
+    const stuCards = d.studentsSupported.length > 0
+        ? d.studentsSupported.map(s => {
+            const pct = s.amountNeeded > 0
+                ? Math.min(Math.round((Number(s.amountRaised) / Number(s.amountNeeded)) * 100), 100)
+                : 0;
+            return `
+                <div class="stu-card">
+                    <div class="stu-name">${s.name}</div>
+                    <div class="stu-uni">${s.university}</div>
+                    <div class="prog-row">
+                        <span>PKR ${Number(s.amountRaised).toLocaleString()} raised</span>
+                        <span style="font-weight:700;color:var(--green);">${pct}%</span>
+                    </div>
+                    <div class="prog-track">
+                        <div class="prog-fill" style="width:${pct}%"></div>
+                    </div>
+                    <div class="stu-footer">
+                        <div class="my-contrib">💚 Your contribution: PKR ${Number(s.myDonation).toLocaleString()}</div>
+                        <span class="badge ${s.status === 'funded' ? 'blue' : s.status === 'verified' ? 'green' : 'amber'}">${s.status}</span>
+                    </div>
+                </div>
+            `;
+        }).join('')
+        : `<div class="empty-state" style="grid-column:span 2;">
+               <h3>No students supported yet</h3>
+               <p>Make a donation to see student progress here.</p>
+           </div>`;
+
+    /* Receipt items */
+    const rcptItems = d.donations.length > 0
+        ? d.donations.map(don => `
+            <div class="rcpt-item">
+                <div class="rcpt-icon">${Number(don.receipt) > 0 ? '🧾' : '⏳'}</div>
+                <div style="flex:1;">
+                    <div class="rcpt-name">${don.studentName} — ${don.university}</div>
+                    <div class="rcpt-meta">Ref: ${don.reference}</div>
+                </div>
+                <div>
+                    <div class="rcpt-amount">PKR ${Number(don.amount).toLocaleString()}</div>
+                    <span class="badge ${Number(don.receipt) > 0 ? 'green' : 'amber'}">
+                        ${Number(don.receipt) > 0 ? '✅ Receipt uploaded' : '⏳ Awaiting receipt'}
+                    </span>
+                </div>
+            </div>
+        `).join('')
+        : `<div class="empty-state"><h3>No receipts yet</h3><p>Receipts appear here after payment is confirmed.</p></div>`;
+
+    /* Impact stars */
+    const stars = d.studentsHelped > 0
+        ? '⭐'.repeat(Math.min(d.studentsHelped, 5))
+        : '—';
+
+    document.getElementById('mainContent').innerHTML = `
+
+        ${isOffline ? `<div class="offline-chip">⚠️ Server offline — showing demo data. Run: <strong style="margin-left:4px;">node server.js</strong></div>` : ''}
+
+        <!-- CTA Banner -->
+        <div class="cta-banner">
+            <div>
+                <h3>Thank you for making a difference! 💚</h3>
+                <p>More verified students are waiting for your support. Every rupee goes directly to their university.</p>
+            </div>
+            <a href="browsestudents.html" class="cta-btn">Donate Again →</a>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-card green">
+                <div class="stat-label">Total Donated</div>
+                <div class="stat-value">PKR ${Number(d.totalDonated).toLocaleString()}</div>
+                <div class="stat-sub">All time</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Donations Made</div>
+                <div class="stat-value">${d.totalDonations}</div>
+                <div class="stat-sub">Total transactions</div>
+            </div>
+            <div class="stat-card amber">
+                <div class="stat-label">Students Helped</div>
+                <div class="stat-value">${d.studentsHelped}</div>
+                <div class="stat-sub">Unique students</div>
+            </div>
+            <div class="stat-card blue">
+                <div class="stat-label">Impact Score</div>
+                <div class="stat-value" style="font-size:18px;margin-top:6px;">${stars}</div>
+                <div class="stat-sub">Based on students helped</div>
+            </div>
+        </div>
+
+        <!-- Donation History -->
+        <div class="card">
+            <div class="card-title">
+                💳 Donation History
+                <span class="card-title-right">${d.donations.length} transaction${d.donations.length !== 1 ? 's' : ''}</span>
+            </div>
+            <div class="table-wrap">
+                <table class="dtable">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Amount</th>
+                            <th>Easypaisa Reference</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Receipt</th>
+                        </tr>
+                    </thead>
+                    <tbody>${donRows}</tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Students Supported -->
+        <div class="card">
+            <div class="card-title">
+                🎓 Students You've Supported
+                <span class="card-title-right">Live funding progress</span>
+            </div>
+            <div class="student-grid">${stuCards}</div>
+        </div>
+
+        <!-- Receipts & Impact Tracking -->
+        <div class="card">
+            <div class="card-title">
+                🧾 Payment Receipts & Impact Tracking
+                <span class="card-title-right">Uploaded by universities</span>
+            </div>
+            <div class="receipt-list">${rcptItems}</div>
+        </div>
+    `;
+}
+
+loadDashboard();
+</script>
+</body>
+</html>

@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin — Qalam Aid</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface2: #334155;
+            --accent: #065f46;
+            --accent2: #10b981;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --danger: #f87171;
+            --radius: 10px;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: 'DM Sans', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        a { color: var(--accent2); }
+
+        /* Login */
+        .login-wrap {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: radial-gradient(ellipse at top, #134e4a 0%, var(--bg) 55%);
+        }
+        .login-card {
+            width: 100%;
+            max-width: 400px;
+            background: var(--surface);
+            padding: 32px;
+            border-radius: var(--radius);
+            border: 1px solid var(--surface2);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.35);
+        }
+        .login-card h1 {
+            margin: 0 0 8px;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .login-card p { margin: 0 0 24px; color: var(--muted); font-size: 0.9rem; }
+        .field { margin-bottom: 16px; }
+        .field label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; }
+        .field input {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--surface2);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 1rem;
+        }
+        .field input:focus {
+            outline: none;
+            border-color: var(--accent2);
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-primary {
+            width: 100%;
+            background: linear-gradient(135deg, var(--accent), #047857);
+            color: #fff;
+        }
+        .btn-primary:hover { filter: brightness(1.08); }
+        .btn-ghost {
+            background: transparent;
+            color: var(--muted);
+            border: 1px solid var(--surface2);
+        }
+        .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+        .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+        .msg { margin-top: 14px; font-size: 0.85rem; min-height: 1.2em; }
+        .msg.err { color: var(--danger); }
+
+        /* App shell */
+        .app { display: none; min-height: 100vh; }
+        .app.visible { display: flex; flex-direction: column; }
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--surface2);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .brand { font-weight: 700; font-size: 1.1rem; letter-spacing: -0.02em; }
+        .brand span { color: var(--accent2); font-weight: 500; }
+        .topbar-actions { display: flex; align-items: center; gap: 12px; }
+        .user-pill { font-size: 0.85rem; color: var(--muted); }
+
+        .layout { display: flex; flex: 1; min-height: 0; }
+        .nav {
+            width: 200px;
+            background: var(--surface);
+            border-right: 1px solid var(--surface2);
+            padding: 16px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .nav button {
+            text-align: left;
+            padding: 12px 14px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--muted);
+            font-family: inherit;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .nav button:hover { background: var(--surface2); color: var(--text); }
+        .nav button.active { background: rgba(16, 185, 129, 0.12); color: var(--accent2); font-weight: 600; }
+
+        main { flex: 1; padding: 24px; overflow: auto; }
+        .panel { display: none; }
+        .panel.active { display: block; animation: fade 0.2s ease; }
+        @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+        .stat {
+            background: var(--surface);
+            border: 1px solid var(--surface2);
+            border-radius: var(--radius);
+            padding: 18px;
+        }
+        .stat .label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+        .stat .value { font-size: 1.65rem; font-weight: 700; margin-top: 6px; }
+        .stat .value.small { font-size: 1.1rem; }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .toolbar label { font-size: 0.8rem; color: var(--muted); }
+        .toolbar select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--surface2);
+            background: var(--surface);
+            color: var(--text);
+            font-family: inherit;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            border: 1px solid var(--surface2);
+            border-radius: var(--radius);
+            background: var(--surface);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--surface2);
+            vertical-align: top;
+        }
+        th {
+            background: rgba(15, 23, 42, 0.6);
+            color: var(--muted);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+        .cell-muted { color: var(--muted); max-width: 220px; }
+        .cell-clamp {
+            max-width: 280px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .status-pill {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+        .status-pill.pending { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+        .status-pill.verified { background: rgba(16, 185, 129, 0.2); color: var(--accent2); }
+        .status-pill.rejected { background: rgba(248, 113, 113, 0.2); color: var(--danger); }
+        .status-pill.initiated { background: rgba(96, 165, 250, 0.2); color: #93c5fd; }
+        .status-pill.completed { background: rgba(16, 185, 129, 0.25); color: #6ee7b7; }
+        .status-pill.cancelled { background: rgba(148, 163, 184, 0.2); color: var(--muted); }
+
+        .row-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .row-actions select {
+            padding: 6px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--surface2);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 0.78rem;
+            max-width: 130px;
+        }
+
+        .empty { padding: 40px; text-align: center; color: var(--muted); }
+
+        .btn-doc {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent2);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-doc:hover { background: rgba(16, 185, 129, 0.28); }
+        .btn-doc:disabled { opacity: 0.45; cursor: not-allowed; }
+
+        .btn-email-uni {
+            background: rgba(96, 165, 250, 0.15);
+            color: #93c5fd;
+            border: 1px solid rgba(96, 165, 250, 0.35);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+        .btn-email-uni:hover:not(:disabled) { background: rgba(96, 165, 250, 0.28); }
+        .btn-email-uni:disabled { opacity: 0.45; cursor: not-allowed; }
+
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.65);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-backdrop.open { display: flex; }
+        .modal {
+            width: 100%;
+            max-width: 520px;
+            max-height: 85vh;
+            overflow: auto;
+            background: var(--surface);
+            border: 1px solid var(--surface2);
+            border-radius: 12px;
+            padding: 22px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.45);
+        }
+        .modal h3 { margin: 0 0 6px; font-size: 1.15rem; }
+        .modal .modal-sub { margin: 0 0 18px; font-size: 0.85rem; color: var(--muted); }
+        .modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            font-size: 1.4rem;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0 4px;
+        }
+        .modal-close:hover { color: var(--text); }
+        .doc-list { list-style: none; margin: 0; padding: 0; }
+        .doc-item {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--surface2);
+        }
+        .doc-item:last-child { border-bottom: none; }
+        .doc-meta { font-size: 0.82rem; }
+        .doc-meta strong { display: block; color: var(--text); }
+        .doc-meta span { color: var(--muted); font-size: 0.75rem; }
+        .doc-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        @media (max-width: 768px) {
+            .layout { flex-direction: column; }
+            .nav {
+                width: 100%;
+                flex-direction: row;
+                flex-wrap: wrap;
+                border-right: none;
+                border-bottom: 1px solid var(--surface2);
+            }
+            .nav button { flex: 1; text-align: center; min-width: 44%; }
+        }
+    </style>
+</head>
+<body>
+    <div id="loginScreen" class="login-wrap">
+        <div class="login-card">
+            <h1>Qalam Aid <span style="color:var(--accent2);font-weight:600;">Admin</span></h1>
+            <p>Sign in with your administrator account.</p>
+            <form id="loginForm">
+                <div class="field">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required autocomplete="username">
+                </div>
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn btn-primary">Sign in</button>
+            </form>
+            <p id="loginMsg" class="msg err" aria-live="polite"></p>
+            <p style="margin-top:20px;font-size:0.8rem;color:var(--muted);">
+                <a href="index.html">← Back to site</a>
+            </p>
+        </div>
+    </div>
+
+    <div id="app" class="app">
+        <header class="topbar">
+            <div class="brand">Qalam Aid <span>Admin</span></div>
+            <div class="topbar-actions">
+                <span id="userPill" class="user-pill"></span>
+                <button type="button" class="btn btn-ghost btn-sm" id="logoutBtn">Log out</button>
+            </div>
+        </header>
+        <div class="layout">
+            <nav class="nav" id="sideNav">
+                <button type="button" data-panel="overview" class="active">Overview</button>
+                <button type="button" data-panel="applications">Applications</button>
+                <button type="button" data-panel="students">Students</button>
+                <button type="button" data-panel="donations">Donations</button>
+            </nav>
+            <main>
+                <section id="panel-overview" class="panel active">
+                    <h2 style="margin-top:0;font-size:1.25rem;">Dashboard</h2>
+                    <div class="stats" id="statsGrid"></div>
+                </section>
+                <section id="panel-applications" class="panel">
+                    <h2 style="margin-top:0;font-size:1.25rem;">Applications</h2>
+                    <div class="toolbar">
+                        <label>Filter</label>
+                        <select id="filterApps">
+                            <option value="all">All</option>
+                            <option value="pending">Pending</option>
+                            <option value="verified">Verified</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                        <button type="button" class="btn btn-ghost btn-sm" id="refreshApps">Refresh</button>
+                    </div>
+                    <div class="table-wrap" id="appsTableWrap"></div>
+                </section>
+                <section id="panel-students" class="panel">
+                    <h2 style="margin-top:0;font-size:1.25rem;">Students</h2>
+                    <div class="toolbar">
+                        <label>Filter</label>
+                        <select id="filterStudents">
+                            <option value="all">All</option>
+                            <option value="pending">Pending</option>
+                            <option value="verified">Verified</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                        <button type="button" class="btn btn-ghost btn-sm" id="refreshStudents">Refresh</button>
+                    </div>
+                    <div class="table-wrap" id="studentsTableWrap"></div>
+                </section>
+                <section id="panel-donations" class="panel">
+                    <h2 style="margin-top:0;font-size:1.25rem;">Donations</h2>
+                    <div class="toolbar">
+                        <label>Filter</label>
+                        <select id="filterDonations">
+                            <option value="all">All</option>
+                            <option value="initiated">Initiated</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        <button type="button" class="btn btn-ghost btn-sm" id="refreshDonations">Refresh</button>
+                    </div>
+                    <div class="table-wrap" id="donationsTableWrap"></div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <div id="docsModal" class="modal-backdrop" aria-hidden="true">
+        <div class="modal" role="dialog" aria-labelledby="docsModalTitle">
+            <div class="modal-head">
+                <div>
+                    <h3 id="docsModalTitle">Application documents</h3>
+                    <p class="modal-sub" id="docsModalSub"></p>
+                </div>
+                <button type="button" class="modal-close" id="closeDocsModal" aria-label="Close">&times;</button>
+            </div>
+            <div id="docsModalBody"><p class="empty">Loading…</p></div>
+            <div id="docsModalFooter" style="margin-top:16px;display:none;">
+                <button type="button" class="btn-email-uni" id="emailUniFromModal" style="width:100%;padding:12px;">
+                    Email documents to university
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        const TOKEN_KEY = 'qalam_admin_token';
+
+        function token() { return sessionStorage.getItem(TOKEN_KEY); }
+        function setToken(t) { sessionStorage.setItem(TOKEN_KEY, t); }
+        function clearToken() { sessionStorage.removeItem(TOKEN_KEY); }
+
+        async function api(path, options = {}) {
+            const headers = { 'Content-Type': 'application/json', ...options.headers };
+            const t = token();
+            if (t) headers.Authorization = 'Bearer ' + t;
+            let res;
+            try {
+                res = await fetch(API_BASE + path, { ...options, headers });
+            } catch {
+                throw new Error('Cannot reach API at ' + API_BASE + '. Start backend: cd backend && npm start');
+            }
+            const text = await res.text();
+            let data;
+            try { data = text ? JSON.parse(text) : {}; } catch {
+                if (text && text.includes('Cannot GET /api/admin')) {
+                    throw new Error('Admin API not found — restart the backend (cd backend, then npm start) and reload this page.');
+                }
+                data = { message: text };
+            }
+            if (res.status === 401) {
+                clearToken();
+                showLogin();
+                throw new Error('Session expired. Please sign in again.');
+            }
+            if (!res.ok) throw new Error(data.message || res.statusText || 'Request failed');
+            return data;
+        }
+
+        function pillClass(status) {
+            const s = String(status || '').toLowerCase();
+            if (['pending', 'verified', 'rejected', 'initiated', 'completed', 'cancelled'].includes(s)) return s;
+            return 'pending';
+        }
+
+        function formatMoney(n) {
+            const x = Number(n);
+            if (Number.isNaN(x)) return '—';
+            return 'PKR ' + x.toLocaleString();
+        }
+
+        function formatDate(d) {
+            if (!d) return '—';
+            try { return new Date(d).toLocaleString(); } catch { return d; }
+        }
+
+        function showLogin() {
+            document.getElementById('loginScreen').style.display = '';
+            document.getElementById('app').classList.remove('visible');
+        }
+
+        function showApp() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('app').classList.add('visible');
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('loginMsg');
+            msg.textContent = '';
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            try {
+                const data = await api('/api/admin/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password })
+                });
+                setToken(data.token);
+                document.getElementById('userPill').textContent = data.name + ' · ' + data.email;
+                showApp();
+                await loadOverview();
+            } catch (err) {
+                msg.textContent = err.message;
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            clearToken();
+            showLogin();
+        });
+
+        document.querySelectorAll('#sideNav button').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#sideNav button').forEach((b) => b.classList.remove('active'));
+                btn.classList.add('active');
+                const id = btn.getAttribute('data-panel');
+                document.querySelectorAll('.panel').forEach((p) => p.classList.remove('active'));
+                document.getElementById('panel-' + id).classList.add('active');
+                if (id === 'overview') loadOverview();
+                if (id === 'applications') loadApplications();
+                if (id === 'students') loadStudents();
+                if (id === 'donations') loadDonations();
+            });
+        });
+
+        document.getElementById('refreshApps').addEventListener('click', loadApplications);
+        document.getElementById('filterApps').addEventListener('change', loadApplications);
+        document.getElementById('refreshStudents').addEventListener('click', loadStudents);
+        document.getElementById('filterStudents').addEventListener('change', loadStudents);
+        document.getElementById('refreshDonations').addEventListener('click', loadDonations);
+        document.getElementById('filterDonations').addEventListener('change', loadDonations);
+
+        async function loadOverview() {
+            const wrap = document.getElementById('statsGrid');
+            try {
+                const s = await api('/api/admin/stats');
+                const a = s.applications || {};
+                const st = s.students || {};
+                const d = s.donations || {};
+                wrap.innerHTML = [
+                    statCard('Pending applications', a.pendingApplications),
+                    statCard('Verified applications', a.verifiedApplications),
+                    statCard('Rejected applications', a.rejectedApplications),
+                    statCard('Total applications', a.totalApplications),
+                    statCard('Students (verified)', st.verifiedStudents),
+                    statCard('Students (pending)', st.pendingStudents),
+                    statCard('Donations (completed)', d.completedDonations),
+                    statCard('Total raised (completed)', formatMoney(d.totalRaisedPkr), true)
+                ].join('');
+            } catch (e) {
+                wrap.innerHTML = '<p class="empty">' + escapeHtml(e.message) + '</p>';
+            }
+        }
+
+        function statCard(label, value, small) {
+            return '<div class="stat"><div class="label">' + escapeHtml(label) + '</div>' +
+                '<div class="value' + (small ? ' small' : '') + '">' + escapeHtml(String(value)) + '</div></div>';
+        }
+
+        function escapeHtml(s) {
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        function formatFileSize(bytes) {
+            const n = Number(bytes);
+            if (!n || Number.isNaN(n)) return '—';
+            if (n < 1024) return n + ' B';
+            if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+            return (n / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        let docsModalAppId = null;
+
+        function closeDocsModal() {
+            document.getElementById('docsModal').classList.remove('open');
+            document.getElementById('docsModal').setAttribute('aria-hidden', 'true');
+            document.getElementById('docsModalFooter').style.display = 'none';
+            docsModalAppId = null;
+        }
+
+        async function emailDocumentsToUniversity(applicationId, btn) {
+            if (!applicationId) return;
+            const prev = btn ? btn.textContent : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Sending…';
+            }
+            try {
+                const data = await api('/api/admin/applications/' + applicationId + '/email-university', {
+                    method: 'POST',
+                    body: '{}'
+                });
+                alert(data.message || 'Email sent.');
+            } catch (e) {
+                alert(e.message || 'Could not send email.');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = prev;
+                }
+            }
+        }
+
+        document.getElementById('emailUniFromModal').addEventListener('click', () => {
+            emailDocumentsToUniversity(docsModalAppId, document.getElementById('emailUniFromModal'));
+        });
+
+        document.getElementById('closeDocsModal').addEventListener('click', closeDocsModal);
+        document.getElementById('docsModal').addEventListener('click', (e) => {
+            if (e.target.id === 'docsModal') closeDocsModal();
+        });
+
+        async function fetchAdminFileBlob(documentId, download) {
+            const q = download ? '?download=1' : '';
+            const url = API_BASE + '/api/admin/documents/' + documentId + '/file' + q;
+            const res = await fetch(url, {
+                headers: { Authorization: 'Bearer ' + token() }
+            });
+            if (!res.ok) {
+                let msg = 'Could not load file';
+                try {
+                    const j = await res.json();
+                    if (j.message) msg = j.message;
+                } catch { /* ignore */ }
+                throw new Error(msg);
+            }
+            return res.blob();
+        }
+
+        async function viewAdminDocument(documentId, mimeType, displayName) {
+            try {
+                const blob = await fetchAdminFileBlob(documentId, false);
+                const type = mimeType || blob.type || 'application/octet-stream';
+                const url = URL.createObjectURL(new Blob([blob], { type }));
+                const w = window.open(url, '_blank');
+                if (!w) {
+                    URL.revokeObjectURL(url);
+                    alert('Allow pop-ups to view documents, or use Download instead.');
+                    return;
+                }
+                setTimeout(() => URL.revokeObjectURL(url), 60000);
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        async function downloadAdminDocument(documentId, displayName) {
+            try {
+                const blob = await fetchAdminFileBlob(documentId, true);
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = displayName || 'document';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        async function openDocsModal(applicationId, studentName, universityEmail) {
+            docsModalAppId = applicationId;
+            document.getElementById('docsModalTitle').textContent = 'Application #' + applicationId;
+            const sub = studentName || '';
+            document.getElementById('docsModalSub').textContent = sub +
+                (universityEmail ? ' · University: ' + universityEmail : '');
+            document.getElementById('docsModalBody').innerHTML = '<p class="empty">Loading…</p>';
+            document.getElementById('docsModalFooter').style.display = 'none';
+            document.getElementById('docsModal').classList.add('open');
+            document.getElementById('docsModal').setAttribute('aria-hidden', 'false');
+
+            try {
+                const data = await api('/api/admin/applications/' + applicationId + '/documents');
+                const docs = data.documents || [];
+                document.getElementById('docsModalFooter').style.display = 'block';
+                if (!docs.length) {
+                    document.getElementById('docsModalBody').innerHTML =
+                        '<p class="empty">No documents uploaded. You can still send the verification email to the university.</p>';
+                    return;
+                }
+                let html = '<ul class="doc-list">';
+                docs.forEach((doc) => {
+                    const label = doc.label || doc.originalName || doc.filename || ('Document ' + doc.id);
+                    html += '<li class="doc-item"><div class="doc-meta"><strong>' +
+                        escapeHtml(label) + '</strong><span>' +
+                        escapeHtml(formatFileSize(doc.size)) + (doc.extension ? ' · ' + doc.extension : '') +
+                        '</span></div>' +
+                        '<div class="doc-actions">' +
+                        '<button type="button" class="btn-doc" data-view-doc="' + doc.id + '">View</button>' +
+                        '<button type="button" class="btn btn-ghost btn-sm" data-dl-doc="' + doc.id + '">Download</button>' +
+                        '</div></li>';
+                });
+                html += '</ul>';
+                document.getElementById('docsModalBody').innerHTML = html;
+
+                const docList = data.documents || [];
+                document.getElementById('docsModalBody').querySelectorAll('[data-view-doc]').forEach((btn) => {
+                    btn.addEventListener('click', () => {
+                        const id = btn.getAttribute('data-view-doc');
+                        const doc = docList.find((d) => String(d.id) === String(id));
+                        viewAdminDocument(id, doc && doc.mimeType, doc && (doc.originalName || doc.label));
+                    });
+                });
+                document.getElementById('docsModalBody').querySelectorAll('[data-dl-doc]').forEach((btn) => {
+                    btn.addEventListener('click', () => {
+                        const id = btn.getAttribute('data-dl-doc');
+                        const doc = docList.find((d) => String(d.id) === String(id));
+                        downloadAdminDocument(id, doc && (doc.originalName || doc.label));
+                    });
+                });
+            } catch (e) {
+                document.getElementById('docsModalBody').innerHTML =
+                    '<p class="empty">' + escapeHtml(e.message) + '</p>';
+            }
+        }
+
+        async function loadApplications() {
+            const wrap = document.getElementById('appsTableWrap');
+            const f = document.getElementById('filterApps').value;
+            wrap.innerHTML = '<p class="empty">Loading…</p>';
+            try {
+                const q = f === 'all' ? '' : '?status=' + encodeURIComponent(f);
+                const rows = await api('/api/admin/applications' + q);
+                if (!rows.length) {
+                    wrap.innerHTML = '<p class="empty">No applications.</p>';
+                    return;
+                }
+                let html = '<table><thead><tr>' +
+                    '<th>ID</th><th>Student</th><th>University</th><th>Amount</th><th>Status</th><th>Documents</th><th>Submitted</th><th>Action</th>' +
+                    '</tr></thead><tbody>';
+                rows.forEach((r) => {
+                    const docCount = r.documentCount != null ? r.documentCount : 0;
+                    const docBtn = '<button type="button" class="btn-doc" data-open-docs="' + r.id + '">' +
+                        (docCount ? 'View (' + docCount + ')' : 'None') + '</button>';
+                    const emailUniBtn = r.universityEmail
+                        ? '<button type="button" class="btn-email-uni" data-email-uni="' + r.id + '">Email uni</button>'
+                        : '';
+                    html += '<tr><td>' + r.id + '</td>' +
+                        '<td><strong>' + escapeHtml(r.studentName || '') + '</strong><br>' +
+                        '<span class="cell-muted">' + escapeHtml(r.studentEmail || '') + '</span></td>' +
+                        '<td>' + escapeHtml(r.universityName || '') + '<br><span class="cell-muted">' + escapeHtml(r.department || '') + '</span></td>' +
+                        '<td>' + escapeHtml(String(r.amountNeeded || '')) + '</td>' +
+                        '<td><span class="status-pill ' + pillClass(r.status) + '">' + escapeHtml(r.status || '') + '</span></td>' +
+                        '<td>' + docBtn + '</td>' +
+                        '<td class="cell-muted">' + escapeHtml(formatDate(r.submittedAt)) + '</td>' +
+                        '<td class="row-actions">' + emailUniBtn + appStatusSelect(r.id, r.status) + '</td></tr>';
+                });
+                html += '</tbody></table>';
+                wrap.innerHTML = html;
+                wrap.querySelectorAll('[data-patch-app]').forEach((btn) => {
+                    btn.addEventListener('click', async () => {
+                        const id = btn.getAttribute('data-patch-app');
+                        const sel = wrap.querySelector('select[data-app-id="' + id + '"]');
+                        try {
+                            await api('/api/admin/applications/' + id, {
+                                method: 'PATCH',
+                                body: JSON.stringify({ status: sel.value })
+                            });
+                            await loadApplications();
+                            await loadOverview();
+                        } catch (e) { alert(e.message); }
+                    });
+                });
+                wrap.querySelectorAll('[data-open-docs]').forEach((btn) => {
+                    btn.addEventListener('click', () => {
+                        const id = btn.getAttribute('data-open-docs');
+                        const row = rows.find((x) => String(x.id) === String(id));
+                        openDocsModal(id, row ? row.studentName : '', row ? row.universityEmail : '');
+                    });
+                });
+                wrap.querySelectorAll('[data-email-uni]').forEach((btn) => {
+                    btn.addEventListener('click', () => {
+                        emailDocumentsToUniversity(btn.getAttribute('data-email-uni'), btn);
+                    });
+                });
+            } catch (e) {
+                wrap.innerHTML = '<p class="empty">' + escapeHtml(e.message) + '</p>';
+            }
+        }
+
+        function appStatusSelect(id, current) {
+            const opts = ['pending', 'verified', 'rejected'].map((v) =>
+                '<option value="' + v + '"' + (v === current ? ' selected' : '') + '>' + v + '</option>'
+            ).join('');
+            return '<select data-app-id="' + id + '">' + opts + '</select>' +
+                '<button type="button" class="btn btn-primary btn-sm" data-patch-app="' + id + '">Update</button>';
+        }
+
+        async function loadStudents() {
+            const wrap = document.getElementById('studentsTableWrap');
+            const f = document.getElementById('filterStudents').value;
+            wrap.innerHTML = '<p class="empty">Loading…</p>';
+            try {
+                const q = f === 'all' ? '' : '?status=' + encodeURIComponent(f);
+                const rows = await api('/api/admin/students' + q);
+                if (!rows.length) {
+                    wrap.innerHTML = '<p class="empty">No students.</p>';
+                    return;
+                }
+                let html = '<table><thead><tr>' +
+                    '<th>ID</th><th>Name</th><th>Email</th><th>University</th><th>Reg #</th><th>Status</th><th>Action</th>' +
+                    '</tr></thead><tbody>';
+                rows.forEach((r) => {
+                    html += '<tr><td>' + r.id + '</td>' +
+                        '<td>' + escapeHtml(r.name || '') + '</td>' +
+                        '<td class="cell-muted">' + escapeHtml(r.email || '') + '</td>' +
+                        '<td>' + escapeHtml(r.universityName || '') + '</td>' +
+                        '<td class="cell-muted">' + escapeHtml(r.regNumber || '') + '</td>' +
+                        '<td><span class="status-pill ' + pillClass(r.status) + '">' + escapeHtml(r.status || '') + '</span></td>' +
+                        '<td class="row-actions">' + studentStatusSelect(r.id, r.status) + '</td></tr>';
+                });
+                html += '</tbody></table>';
+                wrap.innerHTML = html;
+                wrap.querySelectorAll('[data-patch-student]').forEach((btn) => {
+                    btn.addEventListener('click', async () => {
+                        const id = btn.getAttribute('data-patch-student');
+                        const sel = wrap.querySelector('select[data-student-id="' + id + '"]');
+                        try {
+                            await api('/api/admin/students/' + id, {
+                                method: 'PATCH',
+                                body: JSON.stringify({ status: sel.value })
+                            });
+                            await loadStudents();
+                            await loadOverview();
+                        } catch (e) { alert(e.message); }
+                    });
+                });
+            } catch (e) {
+                wrap.innerHTML = '<p class="empty">' + escapeHtml(e.message) + '</p>';
+            }
+        }
+
+        function studentStatusSelect(id, current) {
+            const opts = ['pending', 'verified', 'rejected'].map((v) =>
+                '<option value="' + v + '"' + (v === current ? ' selected' : '') + '>' + v + '</option>'
+            ).join('');
+            return '<select data-student-id="' + id + '">' + opts + '</select>' +
+                '<button type="button" class="btn btn-primary btn-sm" data-patch-student="' + id + '">Update</button>';
+        }
+
+        async function loadDonations() {
+            const wrap = document.getElementById('donationsTableWrap');
+            const f = document.getElementById('filterDonations').value;
+            wrap.innerHTML = '<p class="empty">Loading…</p>';
+            try {
+                const q = f === 'all' ? '' : '?status=' + encodeURIComponent(f);
+                const rows = await api('/api/admin/donations' + q);
+                if (!rows.length) {
+                    wrap.innerHTML = '<p class="empty">No donations.</p>';
+                    return;
+                }
+                let html = '<table><thead><tr>' +
+                    '<th>ID</th><th>Donor</th><th>Student</th><th>Amount</th><th>Reference</th><th>Status</th><th>Date</th><th>Action</th>' +
+                    '</tr></thead><tbody>';
+                rows.forEach((r) => {
+                    html += '<tr><td>' + r.id + '</td>' +
+                        '<td><strong>' + escapeHtml(r.donorName || '') + '</strong><br><span class="cell-muted">' + escapeHtml(r.donorEmail || '') + '</span></td>' +
+                        '<td>' + escapeHtml(r.studentName || '') + '<br><span class="cell-muted">' + escapeHtml(r.universityName || '') + '</span></td>' +
+                        '<td>' + escapeHtml(formatMoney(r.amount)) + '</td>' +
+                        '<td class="cell-clamp cell-muted">' + escapeHtml(r.easypaisaRef || '') + '</td>' +
+                        '<td><span class="status-pill ' + pillClass(r.status) + '">' + escapeHtml(r.status || '') + '</span></td>' +
+                        '<td class="cell-muted">' + escapeHtml(formatDate(r.donatedAt)) + '</td>' +
+                        '<td class="row-actions">' + donationStatusSelect(r.id, r.status) + '</td></tr>';
+                });
+                html += '</tbody></table>';
+                wrap.innerHTML = html;
+                wrap.querySelectorAll('[data-patch-donation]').forEach((btn) => {
+                    btn.addEventListener('click', async () => {
+                        const id = btn.getAttribute('data-patch-donation');
+                        const sel = wrap.querySelector('select[data-donation-id="' + id + '"]');
+                        try {
+                            await api('/api/admin/donations/' + id, {
+                                method: 'PATCH',
+                                body: JSON.stringify({ status: sel.value })
+                            });
+                            await loadDonations();
+                            await loadOverview();
+                        } catch (e) { alert(e.message); }
+                    });
+                });
+            } catch (e) {
+                wrap.innerHTML = '<p class="empty">' + escapeHtml(e.message) + '</p>';
+            }
+        }
+
+        function donationStatusSelect(id, current) {
+            const opts = ['initiated', 'completed', 'cancelled'].map((v) =>
+                '<option value="' + v + '"' + (v === current ? ' selected' : '') + '>' + v + '</option>'
+            ).join('');
+            return '<select data-donation-id="' + id + '">' + opts + '</select>' +
+                '<button type="button" class="btn btn-primary btn-sm" data-patch-donation="' + id + '">Update</button>';
+        }
+
+        (async function boot() {
+            const t = token();
+            if (!t) {
+                showLogin();
+                return;
+            }
+            try {
+                const me = await api('/api/admin/me');
+                document.getElementById('userPill').textContent = me.name + ' · ' + me.email;
+                showApp();
+                await loadOverview();
+            } catch {
+                clearToken();
+                showLogin();
+            }
+        })();
+    </script>
+</body>
+</html>

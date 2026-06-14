@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verified Students — Qalam Aid</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+        }
+        .header {
+            background-color: #000;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 { margin: 0; font-size: 24px; }
+        .header p { font-size: 14px; color: #ccc; }
+
+        .nav-bar { background-color: #333; overflow: hidden; }
+        .nav-bar a {
+            float: left; display: block; color: white;
+            text-align: center; padding: 14px 16px;
+            text-decoration: none; font-size: 14px;
+        }
+        .nav-bar a:hover { background-color: #ddd; color: black; }
+
+        .container {
+            padding: 20px;
+            background-color: #fff;
+            margin: 20px auto;
+            width: 80%;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .search-box {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .search-box input {
+            padding: 10px;
+            width: 300px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .filter-select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .results-count {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .student-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .student-grid { grid-template-columns: repeat(2, 1fr); }
+            .container { width: 95%; }
+        }
+        @media (max-width: 600px) {
+            .student-grid { grid-template-columns: 1fr; }
+        }
+
+        .student-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            text-align: center;
+            border-radius: 10px;
+            background-color: #fafafa;
+            transition: box-shadow 0.2s;
+        }
+        .student-card:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .avatar {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background: #065f46;
+            color: white;
+            font-size: 22px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+        }
+
+        .student-card h3 { margin: 8px 0 4px; font-size: 17px; }
+
+        .student-card .university {
+            font-size: 13px;
+            color: #065f46;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .student-card .dept {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 6px;
+        }
+        .student-card .reason {
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 10px;
+            min-height: 40px;
+        }
+
+        .priority-badge {
+            display: inline-block;
+            font-size: 11px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            background: #fff3cd;
+            color: #856404;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .priority-badge.high {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .verified-badge {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: #d4edda;
+            color: #155724;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .fee-info {
+            font-size: 13px;
+            color: #333;
+            margin-bottom: 6px;
+        }
+        .fee-info span {
+            font-weight: bold;
+            color: #065f46;
+        }
+
+        .progress-bar {
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 8px 0;
+            height: 10px;
+        }
+        .progress {
+            background-color: #4caf50;
+            height: 10px;
+        }
+        .progress-text {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 10px;
+        }
+
+        .donate-btn {
+            background-color: #065f46;
+            color: white;
+            border: none;
+            padding: 10px;
+            width: 100%;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .donate-btn:hover { background-color: #047857; }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #888;
+            font-size: 16px;
+        }
+
+        .no-students {
+            text-align: center;
+            padding: 60px;
+            color: #888;
+        }
+        .no-students h3 { color: #333; }
+
+        .error-msg-box {
+            text-align: center;
+            padding: 40px;
+            background: #fee2e2;
+            border-radius: 10px;
+            color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="nav-bar">
+        <a href="home.html">Home</a>
+        <a href="about.html">About Us</a>
+        <a href="browsestudents.html">Browse Students</a>
+        <a href="contact.html">Contact</a>
+    </div>
+
+    <div class="header">
+        <h1>✅ Verified Students</h1>
+        <p>All students below have been verified by contacting their universities. Your donation goes directly to their university fee account.</p>
+    </div>
+
+    <div class="container">
+
+        <div class="search-box">
+            <div>
+                <input type="text" id="searchInput" placeholder="Search by name or university...">
+                <select class="filter-select" id="priorityFilter">
+                    <option value="">All Priorities</option>
+                    <option value="1st">1st Priority (Orphan)</option>
+                    <option value="2nd">2nd Priority (Disabled parent)</option>
+                    <option value="3rd">3rd Priority (Low income)</option>
+                    <option value="4th">4th Priority (Unemployed guardian)</option>
+                    <option value="5th">5th Priority (Siblings studying)</option>
+                    <option value="6th">6th Priority (Rural)</option>
+                    <option value="7th">7th Priority (Female)</option>
+                </select>
+            </div>
+            <div class="results-count" id="resultsCount"></div>
+        </div>
+
+        <div id="studentGrid" class="student-grid">
+            <div class="loading" style="grid-column: span 3;">
+                Loading verified students...
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let allStudents = [];
+
+        // Load students from backend
+        async function loadStudents() {
+            try {
+                const res  = await fetch('http://localhost:5000/api/students');
+                const data = await res.json();
+                allStudents = data;
+                renderStudents(allStudents);
+            } catch (err) {
+                document.getElementById('studentGrid').innerHTML = `
+                    <div class="error-msg-box" style="grid-column:span 3;">
+                        <h3>❌ Cannot connect to server</h3>
+                        <p>Make sure your backend is running.</p>
+                        <p>Go to VS Code terminal and run: <strong>node server.js</strong></p>
+                    </div>
+                `;
+            }
+        }
+
+        // Render student cards
+        function renderStudents(students) {
+            const grid = document.getElementById('studentGrid');
+            const count = document.getElementById('resultsCount');
+
+            if (students.length === 0) {
+                grid.innerHTML = `
+                    <div class="no-students" style="grid-column:span 3;">
+                        <h3>No verified students found</h3>
+                        <p>Check back later or adjust your search.</p>
+                    </div>
+                `;
+                count.innerText = '0 students found';
+                return;
+            }
+
+            count.innerText = `${students.length} verified student${students.length > 1 ? 's' : ''} found`;
+
+            grid.innerHTML = students.map(s => {
+                const initials   = s.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+                const raised     = Number(s.amount_raised) || 0;
+                const needed     = Number(s.amount_needed) || 1;
+                const percent    = Math.min(Math.round((raised / needed) * 100), 100);
+                const isHighPrio = s.priority_level && (
+                    s.priority_level.includes('1st') || s.priority_level.includes('2nd')
+                );
+                const shortReason = s.reason
+                    ? (s.reason.length > 80 ? s.reason.slice(0, 80) + '...' : s.reason)
+                    : 'Financial hardship — needs support to continue education.';
+
+                return `
+                    <div class="student-card" data-name="${s.name.toLowerCase()}" data-uni="${s.university_name.toLowerCase()}" data-priority="${s.priority_level || ''}">
+                        <div class="avatar">${initials}</div>
+                        <div class="verified-badge">✅ University Verified</div>
+                        <h3>${s.name}</h3>
+                        <div class="university">${s.university_name}</div>
+                        <div class="dept">${s.department || ''} ${s.semester ? '· ' + s.semester : ''}</div>
+                        ${s.priority_level ? `<div class="priority-badge ${isHighPrio ? 'high' : ''}">${s.priority_level}</div>` : ''}
+                        <div class="reason">${shortReason}</div>
+                        <div class="fee-info">Fee needed: <span>PKR ${Number(s.amount_needed).toLocaleString()}</span></div>
+                        <div class="progress-bar">
+                            <div class="progress" style="width:${percent}%"></div>
+                        </div>
+                        <div class="progress-text">PKR ${raised.toLocaleString()} raised of PKR ${needed.toLocaleString()} (${percent}%)</div>
+                        <button class="donate-btn" onclick="donateToStudent(${s.application_id}, '${s.name}', ${s.amount_needed})">
+                            Donate to ${s.name.split(' ')[0]}
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Search and filter
+        function filterStudents() {
+            const search   = document.getElementById('searchInput').value.toLowerCase();
+            const priority = document.getElementById('priorityFilter').value.toLowerCase();
+
+            const filtered = allStudents.filter(s => {
+                const matchSearch = !search ||
+                    s.name.toLowerCase().includes(search) ||
+                    s.university_name.toLowerCase().includes(search);
+                const matchPriority = !priority ||
+                    (s.priority_level && s.priority_level.toLowerCase().includes(priority));
+                return matchSearch && matchPriority;
+            });
+
+            renderStudents(filtered);
+        }
+
+        // Donate button click
+        function donateToStudent(applicationId, name, amount) {
+            window.location.href = `donatenow.html?applicationId=${applicationId}&name=${encodeURIComponent(name)}&amount=${amount}`;
+        }
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', filterStudents);
+        document.getElementById('priorityFilter').addEventListener('change', filterStudents);
+
+        // Load on page open
+        loadStudents();
+    </script>
+
+</body>
+</html>

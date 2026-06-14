@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easypaisa — Sandbox Simulator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ep-green:  #00a651;
+            --ep-dark:   #007a3d;
+            --ep-light:  #e6f7ee;
+            --ep-yellow: #ffd700;
+            --text:      #1a1a1a;
+            --muted:     #6b7280;
+            --border:    #e5e7eb;
+            --bg:        #f3f4f6;
+            --white:     #ffffff;
+            --red:       #ef4444;
+            --sandbox:   #7c3aed;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Sandbox Banner */
+        .sandbox-banner {
+            width: 100%;
+            max-width: 400px;
+            background: var(--sandbox);
+            color: white;
+            text-align: center;
+            padding: 8px;
+            border-radius: 8px 8px 0 0;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Phone Frame */
+        .phone {
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            border-radius: 0 0 24px 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            overflow: hidden;
+            min-height: 600px;
+            position: relative;
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+            flex-direction: column;
+            min-height: 600px;
+        }
+        .screen.active {
+            display: flex;
+        }
+
+        /* ── Screen 1: App Home ── */
+        .ep-header {
+            background: var(--ep-green);
+            padding: 20px 20px 30px;
+            color: white;
+        }
+        .ep-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .ep-logo-icon {
+            width: 36px; height: 36px;
+            background: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        .ep-logo-text {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .ep-balance-card {
+            background: rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 14px 16px;
+            backdrop-filter: blur(10px);
+        }
+        .ep-balance-label { font-size: 12px; opacity: 0.8; margin-bottom: 4px; }
+        .ep-balance-amount { font-size: 28px; font-weight: 700; font-family: 'DM Mono', monospace; }
+        .ep-balance-sub { font-size: 11px; opacity: 0.7; margin-top: 2px; }
+
+        .ep-menu-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            padding: 20px;
+        }
+        .ep-menu-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            padding: 8px 4px;
+            border-radius: 10px;
+            transition: background 0.15s;
+        }
+        .ep-menu-item:hover { background: var(--ep-light); }
+        .ep-menu-item.active-menu { background: var(--ep-light); }
+        .ep-menu-icon {
+            width: 48px; height: 48px;
+            border-radius: 14px;
+            background: var(--ep-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+        .ep-menu-label { font-size: 11px; color: var(--text); text-align: center; font-weight: 500; }
+
+        /* ── Screen 2: Send Money ── */
+        .ep-topbar {
+            background: var(--ep-green);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+        }
+        .ep-back {
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .ep-topbar-title { font-size: 16px; font-weight: 600; }
+
+        .ep-form { padding: 24px 20px; flex: 1; }
+        .ep-input-group { margin-bottom: 20px; }
+        .ep-input-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--muted);
+            margin-bottom: 8px;
+            display: block;
+        }
+        .ep-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: 'DM Sans', sans-serif;
+            outline: none;
+            transition: border 0.15s;
+        }
+        .ep-input:focus { border-color: var(--ep-green); }
+        .ep-input.error { border-color: var(--red); }
+
+        .ep-amount-presets {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .ep-preset {
+            padding: 6px 12px;
+            border: 1.5px solid var(--ep-green);
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--ep-green);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.15s;
+        }
+        .ep-preset:hover, .ep-preset.selected {
+            background: var(--ep-green);
+            color: white;
+        }
+
+        .ep-btn {
+            width: 100%;
+            background: var(--ep-green);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .ep-btn:hover { background: var(--ep-dark); }
+        .ep-btn:disabled { background: #9ca3af; cursor: not-allowed; }
+
+        /* ── Screen 3: Confirm ── */
+        .confirm-details {
+            padding: 24px 20px;
+            flex: 1;
+        }
+        .confirm-card {
+            background: var(--ep-light);
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .confirm-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0,166,81,0.15);
+        }
+        .confirm-row:last-child { border-bottom: none; }
+        .confirm-row-label { font-size: 13px; color: var(--muted); }
+        .confirm-row-value { font-size: 14px; font-weight: 600; color: var(--text); text-align: right; max-width: 60%; }
+        .confirm-amount-big {
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .confirm-amount-big p { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+        .confirm-amount-big h2 {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--ep-green);
+            font-family: 'DM Mono', monospace;
+        }
+
+        /* ── Screen 4: OTP ── */
+        .otp-screen { padding: 32px 20px; flex: 1; text-align: center; }
+        .otp-screen h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+        .otp-screen p { font-size: 14px; color: var(--muted); margin-bottom: 30px; line-height: 1.6; }
+        .otp-boxes {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+        .otp-box {
+            width: 52px; height: 60px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 24px;
+            font-weight: 700;
+            text-align: center;
+            outline: none;
+            font-family: 'DM Mono', monospace;
+            transition: border 0.15s;
+        }
+        .otp-box:focus { border-color: var(--ep-green); }
+        .otp-hint {
+            background: #fef3c7;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 13px;
+            color: #92400e;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .otp-resend {
+            font-size: 13px;
+            color: var(--ep-green);
+            cursor: pointer;
+            text-decoration: underline;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        /* ── Screen 5: Processing ── */
+        .processing-screen {
+            padding: 60px 20px;
+            flex: 1;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .spinner {
+            width: 60px; height: 60px;
+            border: 4px solid var(--ep-light);
+            border-top-color: var(--ep-green);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .processing-screen h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+        .processing-screen p { font-size: 14px; color: var(--muted); }
+
+        /* ── Screen 6: Success ── */
+        .success-screen {
+            padding: 40px 20px;
+            flex: 1;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .success-icon {
+            width: 80px; height: 80px;
+            background: var(--ep-green);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin-bottom: 20px;
+            animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes popIn {
+            from { transform: scale(0); opacity: 0; }
+            to   { transform: scale(1); opacity: 1; }
+        }
+        .success-screen h2 { font-size: 22px; font-weight: 700; color: var(--ep-green); margin-bottom: 6px; }
+        .success-screen .success-amount {
+            font-size: 32px;
+            font-weight: 700;
+            font-family: 'DM Mono', monospace;
+            color: var(--text);
+            margin-bottom: 20px;
+        }
+        .success-receipt {
+            background: var(--ep-light);
+            border-radius: 14px;
+            padding: 18px;
+            width: 100%;
+            text-align: left;
+            margin-bottom: 24px;
+        }
+        .success-receipt-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,166,81,0.1);
+            font-size: 13px;
+        }
+        .success-receipt-row:last-child { border-bottom: none; }
+        .success-receipt-row span:first-child { color: var(--muted); }
+        .success-receipt-row span:last-child  { font-weight: 600; color: var(--text); }
+        .success-txn {
+            font-family: 'DM Mono', monospace;
+            color: var(--ep-green) !important;
+        }
+        .success-btn-row {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+        .ep-btn-outline {
+            flex: 1;
+            background: white;
+            color: var(--ep-green);
+            border: 2px solid var(--ep-green);
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        /* ── Screen 7: Failed ── */
+        .failed-screen {
+            padding: 40px 20px;
+            flex: 1;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .failed-icon {
+            width: 80px; height: 80px;
+            background: var(--red);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        .failed-screen h2 { font-size: 22px; font-weight: 700; color: var(--red); margin-bottom: 8px; }
+        .failed-screen p  { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+
+        /* Sandbox controls */
+        .sandbox-controls {
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+            border: 2px solid var(--sandbox);
+        }
+        .sandbox-controls h4 {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--sandbox);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+        .sandbox-btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .sandbox-btn {
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1.5px solid var(--sandbox);
+            color: var(--sandbox);
+            background: white;
+            transition: all 0.15s;
+        }
+        .sandbox-btn:hover { background: var(--sandbox); color: white; }
+        .sandbox-btn.success-sim { border-color: var(--ep-green); color: var(--ep-green); }
+        .sandbox-btn.success-sim:hover { background: var(--ep-green); color: white; }
+        .sandbox-btn.fail-sim { border-color: var(--red); color: var(--red); }
+        .sandbox-btn.fail-sim:hover { background: var(--red); color: white; }
+
+        .error-msg {
+            color: var(--red);
+            font-size: 12px;
+            margin-top: 6px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Sandbox badge -->
+<div class="sandbox-banner">🧪 Sandbox Mode — Test Environment</div>
+
+<div class="phone">
+
+    <!-- ── Screen 1: App Home ── -->
+    <div class="screen active" id="screen-home">
+        <div class="ep-header">
+            <div class="ep-logo">
+                <div class="ep-logo-icon">💚</div>
+                <div class="ep-logo-text">easypaisa</div>
+            </div>
+            <div class="ep-balance-card">
+                <div class="ep-balance-label">Available Balance</div>
+                <div class="ep-balance-amount" id="displayBalance">PKR 50,000</div>
+                <div class="ep-balance-sub">Sandbox Test Account • 0300-9999999</div>
+            </div>
+        </div>
+        <div class="ep-menu-grid">
+            <div class="ep-menu-item" onclick="goTo('screen-send')">
+                <div class="ep-menu-icon">💸</div>
+                <div class="ep-menu-label">Send Money</div>
+            </div>
+            <div class="ep-menu-item">
+                <div class="ep-menu-icon">📱</div>
+                <div class="ep-menu-label">Mobile Top-Up</div>
+            </div>
+            <div class="ep-menu-item">
+                <div class="ep-menu-icon">🧾</div>
+                <div class="ep-menu-label">Bill Payment</div>
+            </div>
+            <div class="ep-menu-item">
+                <div class="ep-menu-icon">🏦</div>
+                <div class="ep-menu-label">Bank Transfer</div>
+            </div>
+            <div class="ep-menu-item">
+                <div class="ep-menu-icon">🎓</div>
+                <div class="ep-menu-label">Qalam Aid</div>
+            </div>
+            <div class="ep-menu-item">
+                <div class="ep-menu-icon">📊</div>
+                <div class="ep-menu-label">History</div>
+            </div>
+            <div class="ep-menu-item">
+                <div class="ep-menu-icon">⚙️</div>
+                <div class="ep-menu-label">Settings</div>
+            </div>
+            <div class="ep-menu-item">
+                <div class="ep-menu-icon">❓</div>
+                <div class="ep-menu-label">Help</div>
+            </div>
+        </div>
+        <div style="padding:0 20px 20px;">
+            <div style="background:#f0fdf4;border-radius:12px;padding:14px 16px;border:1px solid #bbf7d0;">
+                <p style="font-size:12px;font-weight:700;color:#065f46;margin-bottom:4px;">🎓 Qalam Aid Donation</p>
+                <p style="font-size:12px;color:#047857;">Support verified students — tap Send Money to proceed</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Screen 2: Send Money Form ── -->
+    <div class="screen" id="screen-send">
+        <div class="ep-topbar">
+            <div class="ep-back" onclick="goTo('screen-home')">←</div>
+            <div class="ep-topbar-title">Send Money</div>
+        </div>
+        <div class="ep-form">
+            <div class="ep-input-group">
+                <label class="ep-input-label">Recipient Number</label>
+                <input class="ep-input" id="recipientNumber" type="tel"
+                       placeholder="03xxxxxxxxx" maxlength="11"
+                       value="0300-1234567" readonly
+                       style="background:#f0fdf4;color:#065f46;font-weight:600;">
+                <div style="font-size:12px;color:#065f46;margin-top:6px;font-weight:500;">
+                    ✅ Qalam Aid Official Account
+                </div>
+            </div>
+
+            <div class="ep-input-group">
+                <label class="ep-input-label">Amount (PKR)</label>
+                <input class="ep-input" id="sendAmount" type="number"
+                       placeholder="Enter amount" min="1">
+                <div class="ep-amount-presets">
+                    <span class="ep-preset" onclick="setAmount(1000)">1,000</span>
+                    <span class="ep-preset" onclick="setAmount(2500)">2,500</span>
+                    <span class="ep-preset" onclick="setAmount(5000)">5,000</span>
+                    <span class="ep-preset" onclick="setAmount(10000)">10,000</span>
+                </div>
+                <div class="error-msg" id="amountErr">Valid amount darj karein</div>
+            </div>
+
+            <div class="ep-input-group">
+                <label class="ep-input-label">Remarks / Reference</label>
+                <input class="ep-input" id="remarksInput" type="text"
+                       placeholder="e.g. EP-1234567890-5678">
+                <div style="font-size:12px;color:#d97706;margin-top:6px;">
+                    ⚠️ Reference number zaroor likhein
+                </div>
+                <div class="error-msg" id="remarksErr">Reference number darj karein</div>
+            </div>
+
+            <button class="ep-btn" onclick="proceedToConfirm()">Aage Barein →</button>
+        </div>
+    </div>
+
+    <!-- ── Screen 3: Confirm ── -->
+    <div class="screen" id="screen-confirm">
+        <div class="ep-topbar">
+            <div class="ep-back" onclick="goTo('screen-send')">←</div>
+            <div class="ep-topbar-title">Payment Confirm Karein</div>
+        </div>
+        <div class="confirm-details">
+            <div class="confirm-amount-big">
+                <p>Aap bhej rahe hain</p>
+                <h2 id="confirmAmountDisplay">PKR 0</h2>
+            </div>
+            <div class="confirm-card">
+                <div class="confirm-row">
+                    <span class="confirm-row-label">Recipient</span>
+                    <span class="confirm-row-value">Qalam Aid<br>
+                        <span style="font-size:12px;color:#065f46;">0300-1234567</span>
+                    </span>
+                </div>
+                <div class="confirm-row">
+                    <span class="confirm-row-label">Amount</span>
+                    <span class="confirm-row-value" id="confirmAmount2">PKR 0</span>
+                </div>
+                <div class="confirm-row">
+                    <span class="confirm-row-label">Service Fee</span>
+                    <span class="confirm-row-value" style="color:#065f46;">PKR 0 (Free)</span>
+                </div>
+                <div class="confirm-row">
+                    <span class="confirm-row-label">Reference</span>
+                    <span class="confirm-row-value" id="confirmReference" style="font-family:monospace;font-size:12px;color:#065f46;">—</span>
+                </div>
+                <div class="confirm-row">
+                    <span class="confirm-row-label">Total Deducted</span>
+                    <span class="confirm-row-value" id="confirmTotal" style="font-weight:700;">PKR 0</span>
+                </div>
+            </div>
+            <button class="ep-btn" onclick="goTo('screen-otp')">
+                OTP Se Verify Karein →
+            </button>
+        </div>
+    </div>
+
+    <!-- ── Screen 4: OTP ── -->
+    <div class="screen" id="screen-otp">
+        <div class="ep-topbar">
+            <div class="ep-back" onclick="goTo('screen-confirm')">←</div>
+            <div class="ep-topbar-title">OTP Verify Karein</div>
+        </div>
+        <div class="otp-screen">
+            <h3>📱 OTP Darj Karein</h3>
+            <p>4-digit code bheja gaya hai<br>
+               <strong>0300-9999999</strong> pe<br>
+               (Sandbox: koi bhi 4 numbers)
+            </p>
+            <div class="otp-boxes">
+                <input class="otp-box" id="otp1" maxlength="1" type="number"
+                       oninput="moveNext(this,'otp2')" onkeyup="handleBackspace(event,this,'')">
+                <input class="otp-box" id="otp2" maxlength="1" type="number"
+                       oninput="moveNext(this,'otp3')" onkeyup="handleBackspace(event,this,'otp1')">
+                <input class="otp-box" id="otp3" maxlength="1" type="number"
+                       oninput="moveNext(this,'otp4')" onkeyup="handleBackspace(event,this,'otp2')">
+                <input class="otp-box" id="otp4" maxlength="1" type="number"
+                       oninput="checkOTP()" onkeyup="handleBackspace(event,this,'otp3')">
+            </div>
+            <div class="otp-hint">
+                🧪 Sandbox mein koi bhi 4 numbers likhein. Success ke liye: <strong>1234</strong>. Fail ke liye: <strong>0000</strong>
+            </div>
+            <span class="otp-resend" onclick="resendOTP()">OTP dobara bhejein</span>
+            <button class="ep-btn" onclick="verifyOTP()">Payment Karein ✓</button>
+        </div>
+    </div>
+
+    <!-- ── Screen 5: Processing ── -->
+    <div class="screen" id="screen-processing">
+        <div class="processing-screen">
+            <div class="spinner"></div>
+            <h3>Payment Process Ho Rahi Hai...</h3>
+            <p style="margin-top:8px;">Kripya intezaar karein</p>
+            <p style="margin-top:16px;font-size:12px;color:#9ca3af;">Do not close this window</p>
+        </div>
+    </div>
+
+    <!-- ── Screen 6: Success ── -->
+    <div class="screen" id="screen-success">
+        <div class="success-screen">
+            <div class="success-icon">✓</div>
+            <h2>Payment Kamyab!</h2>
+            <div class="success-amount" id="successAmount">PKR 0</div>
+            <div class="success-receipt">
+                <div class="success-receipt-row">
+                    <span>Bheja</span>
+                    <span>Qalam Aid</span>
+                </div>
+                <div class="success-receipt-row">
+                    <span>Number</span>
+                    <span>0300-1234567</span>
+                </div>
+                <div class="success-receipt-row">
+                    <span>Reference</span>
+                    <span class="success-txn" id="successRef">—</span>
+                </div>
+                <div class="success-receipt-row">
+                    <span>Transaction ID</span>
+                    <span class="success-txn" id="successTxn">—</span>
+                </div>
+                <div class="success-receipt-row">
+                    <span>Waqt</span>
+                    <span id="successTime">—</span>
+                </div>
+                <div class="success-receipt-row">
+                    <span>Status</span>
+                    <span style="color:#065f46;font-weight:700;">✅ Kamyab</span>
+                </div>
+            </div>
+            <div class="success-btn-row">
+                <button class="ep-btn-outline" onclick="goTo('screen-home')">Home</button>
+                <button class="ep-btn" onclick="notifyBackend()">Qalam Aid Ko Notify Karein ✓</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Screen 7: Failed ── -->
+    <div class="screen" id="screen-failed">
+        <div class="failed-screen">
+            <div class="failed-icon">✗</div>
+            <h2>Payment Nakam!</h2>
+            <p>Galat OTP daakhil kiya gaya.<br>Dobara koshish karein.</p>
+            <button class="ep-btn" style="background:var(--red);" onclick="goTo('screen-otp')">
+                Dobara Try Karein
+            </button>
+            <br><br>
+            <button class="ep-btn-outline" onclick="goTo('screen-home')" style="width:100%;">
+                Home Jayein
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<!-- Sandbox Controls -->
+<div class="sandbox-controls">
+    <h4>🧪 Sandbox Controls</h4>
+    <div class="sandbox-btn-row">
+        <button class="sandbox-btn" onclick="prefillDemo()">Demo Data Bharein</button>
+        <button class="sandbox-btn success-sim" onclick="simulateSuccess()">✅ Success Simulate</button>
+        <button class="sandbox-btn fail-sim" onclick="simulateFail()">❌ Fail Simulate</button>
+        <button class="sandbox-btn" onclick="resetAll()">🔄 Reset</button>
+    </div>
+</div>
+
+<script>
+    // State
+    let currentAmount    = 0;
+    let currentReference = '';
+    let sandboxBalance   = 50000;
+
+    // Screen navigation
+    function goTo(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    // Set amount from presets
+    function setAmount(val) {
+        document.getElementById('sendAmount').value = val;
+        document.querySelectorAll('.ep-preset').forEach(p => p.classList.remove('selected'));
+        event.target.classList.add('selected');
+    }
+
+    // Proceed to confirm screen
+    function proceedToConfirm() {
+        const amount   = parseInt(document.getElementById('sendAmount').value);
+        const remarks  = document.getElementById('remarksInput').value.trim();
+        let valid = true;
+
+        if (!amount || amount < 100) {
+            document.getElementById('amountErr').style.display = 'block';
+            valid = false;
+        } else {
+            document.getElementById('amountErr').style.display = 'none';
+        }
+
+        if (!remarks) {
+            document.getElementById('remarksErr').style.display = 'block';
+            valid = false;
+        } else {
+            document.getElementById('remarksErr').style.display = 'none';
+        }
+
+        if (!valid) return;
+
+        currentAmount    = amount;
+        currentReference = remarks;
+
+        document.getElementById('confirmAmountDisplay').innerText = 'PKR ' + amount.toLocaleString();
+        document.getElementById('confirmAmount2').innerText       = 'PKR ' + amount.toLocaleString();
+        document.getElementById('confirmTotal').innerText         = 'PKR ' + amount.toLocaleString();
+        document.getElementById('confirmReference').innerText     = remarks;
+
+        goTo('screen-confirm');
+    }
+
+    // OTP auto-move
+    function moveNext(current, nextId) {
+        if (current.value.length >= 1) {
+            const next = document.getElementById(nextId);
+            if (next) next.focus();
+        }
+    }
+
+    function handleBackspace(e, current, prevId) {
+        if (e.key === 'Backspace' && !current.value && prevId) {
+            document.getElementById(prevId).focus();
+        }
+    }
+
+    function checkOTP() {
+        const otp = getOTP();
+        if (otp.length === 4) {
+            document.getElementById('otp4').blur();
+        }
+    }
+
+    function getOTP() {
+        return ['otp1','otp2','otp3','otp4'].map(id =>
+            document.getElementById(id).value
+        ).join('');
+    }
+
+    function resendOTP() {
+        ['otp1','otp2','otp3','otp4'].forEach(id => {
+            document.getElementById(id).value = '';
+        });
+        document.getElementById('otp1').focus();
+        alert('OTP dobara bheja gaya! (Sandbox: 1234 use karein)');
+    }
+
+    // Verify OTP
+    function verifyOTP() {
+        const otp = getOTP();
+        if (otp.length < 4) {
+            alert('Pura OTP darj karein');
+            return;
+        }
+
+        goTo('screen-processing');
+
+        setTimeout(() => {
+            if (otp === '0000') {
+                goTo('screen-failed');
+            } else {
+                showSuccess();
+            }
+        }, 2000);
+    }
+
+    // Show success
+    function showSuccess() {
+        const txnId = 'TXN' + Date.now();
+        const now   = new Date().toLocaleString('en-PK');
+
+        document.getElementById('successAmount').innerText = 'PKR ' + currentAmount.toLocaleString();
+        document.getElementById('successRef').innerText    = currentReference;
+        document.getElementById('successTxn').innerText    = txnId;
+        document.getElementById('successTime').innerText   = now;
+
+        sandboxBalance -= currentAmount;
+        document.getElementById('displayBalance').innerText = 'PKR ' + sandboxBalance.toLocaleString();
+
+        goTo('screen-success');
+    }
+
+    // Notify backend after success
+    async function notifyBackend() {
+        try {
+            const res = await fetch('http://localhost:5000/api/sandbox/payment-success', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    reference:   currentReference,
+                    amount:      currentAmount,
+                    txnId:       'TXN' + Date.now(),
+                    senderPhone: '0300-9999999',
+                    status:      'completed'
+                })
+            });
+            const data = await res.json();
+            alert('✅ ' + data.message + '\n\nDonation status updated in database!');
+        } catch (err) {
+            alert('⚠️ Backend se connect nahi hua.\nManually admin panel se confirm karein.\n\nRun: node server.js');
+        }
+    }
+
+    // ── Sandbox Controls ──
+    function prefillDemo() {
+        document.getElementById('sendAmount').value   = '5000';
+        document.getElementById('remarksInput').value = 'EP-' + Date.now() + '-DEMO';
+        goTo('screen-send');
+    }
+
+    function simulateSuccess() {
+        if (!currentAmount) {
+            currentAmount    = 5000;
+            currentReference = 'EP-' + Date.now() + '-SIM';
+        }
+        goTo('screen-processing');
+        setTimeout(showSuccess, 1500);
+    }
+
+    function simulateFail() {
+        goTo('screen-processing');
+        setTimeout(() => goTo('screen-failed'), 1500);
+    }
+
+    function resetAll() {
+        sandboxBalance = 50000;
+        currentAmount  = 0;
+        currentReference = '';
+        document.getElementById('displayBalance').innerText = 'PKR 50,000';
+        ['otp1','otp2','otp3','otp4'].forEach(id => {
+            document.getElementById(id).value = '';
+        });
+        document.getElementById('sendAmount').value   = '';
+        document.getElementById('remarksInput').value = '';
+        goTo('screen-home');
+    }
+
+    // Auto-fill reference from URL params
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('reference')) {
+        document.getElementById('remarksInput').value = params.get('reference');
+    }
+    if (params.get('amount')) {
+        document.getElementById('sendAmount').value = params.get('amount');
+    }
+</script>
+
+</body>
+</html>

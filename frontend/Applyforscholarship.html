@@ -1,0 +1,816 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Qalam Aid - Apply for Education Support</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e8f0fe 0%, #f1f5f9 100%);
+            padding: 2rem 1rem;
+            color: #1e293b;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            padding: 2rem 2rem 2.5rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            border-bottom: 3px solid #10b981;
+            padding-bottom: 1.5rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: #065f46;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .header h1::before {
+            content: "✍️";
+            font-size: 2rem;
+        }
+
+        .header p {
+            color: #475569;
+            margin-top: 0.75rem;
+            font-size: 1rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+            background: #ffffff;
+            border-radius: 1.5rem;
+            padding: 0.25rem 0;
+        }
+
+        .form-section h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #0f3b2c;
+            border-left: 5px solid #10b981;
+            padding-left: 1rem;
+            margin-bottom: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.9rem;
+        }
+
+        .form-group label .required {
+            color: #dc2626;
+        }
+
+        input, select, textarea {
+            padding: 0.75rem 1rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 1rem;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            background-color: #fefefe;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+
+        .verification-text, .priority-note {
+            background: #f0fdf4;
+            padding: 1rem 1.25rem;
+            border-radius: 1.25rem;
+            border-left: 5px solid #10b981;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            grid-column: span 2;
+        }
+
+        .priority-note {
+            background: #fffbeb;
+            border-left-color: #f59e0b;
+        }
+
+        .upload-container {
+            margin-top: 2rem;
+            background: #f8fafc;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .upload-label {
+            display: block;
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-label span {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #0f3b2c;
+        }
+
+        .upload-label p {
+            font-size: 0.85rem;
+            color: #475569;
+            margin-top: 0.25rem;
+        }
+
+        .upload-box {
+            border: 2px dashed #cbd5e1;
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+            text-align: center;
+            margin-top: 0.75rem;
+            background: white;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+
+        .upload-box:hover {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .upload-icon {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #10b981;
+        }
+
+        .submit-btn {
+            background: #065f46;
+            color: white;
+            border: none;
+            padding: 0.9rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 2rem;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+            margin-top: 1.5rem;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.05);
+        }
+
+        .submit-btn:hover {
+            background: #047857;
+            transform: translateY(-2px);
+        }
+
+        .error-msg {
+            color: #dc2626;
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        input.invalid, select.invalid, textarea.invalid {
+            border-color: #dc2626;
+            background-color: #fef2f2;
+        }
+
+        .alert-banner {
+            background: #fee2e2;
+            border-left: 5px solid #dc2626;
+            padding: 1rem;
+            border-radius: 1rem;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        .hint-text {
+            font-size: 0.7rem;
+            color: #64748b;
+            margin-top: 0.2rem;
+        }
+
+        @media (max-width: 700px) {
+            .container {
+                padding: 1.25rem;
+            }
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .verification-text, .priority-note {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>📘 Qalam Aid — Education Support</h1>
+        <p>Fill out the form below. We'll verify your enrollment via your university. Support is for students facing financial hardship in HEC-recognized universities.</p>
+    </div>
+
+    <div id="globalAlert" class="alert-banner"></div>
+
+    <form id="scholarshipForm">
+        <!-- PERSONAL INFO -->
+        <div class="form-section">
+            <h2>📌 Personal Information</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Full Name <span class="required">*</span></label>
+                    <input type="text" id="fullName" placeholder="e.g., Muhammad Ali" autocomplete="name">
+                    <div class="hint-text">Only letters, spaces, and dots (NO numbers allowed)</div>
+                </div>
+                <div class="form-group">
+                    <label>Email Address <span class="required">*</span></label>
+                    <input type="email" id="email" placeholder="student@example.com" autocomplete="email">
+                    <div class="hint-text">Valid email format required</div>
+                </div>
+                <div class="form-group">
+                    <label>CNIC / ID Number <span class="required">*</span></label>
+                    <input type="text" id="cnic" placeholder="35201-1234567-1" autocomplete="off">
+                    <div class="hint-text">Format: 12345-1234567-1 (13 digits with hyphens)</div>
+                </div>
+                <div class="form-group">
+                    <label>WhatsApp Phone Number <span class="required">*</span></label>
+                    <input type="tel" id="phone" placeholder="03xxxxxxxxx" autocomplete="tel">
+                    <div class="hint-text">Exactly 11 digits, starts with 03 (e.g., 03001234567)</div>
+                </div>
+                <div class="form-group">
+                    <label>Age <span class="required">*</span></label>
+                    <input type="number" id="age" placeholder="17 to 30 years">
+                </div>
+                <div class="form-group">
+                    <label>Pakistani Citizen (CNIC valid)</label>
+                    <select id="citizen">
+                        <option value="yes">Yes, Pakistani Citizen</option>
+                        <option value="no">No / Not applicable</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACADEMIC DETAILS -->
+        <div class="form-section">
+            <h2>🎓 Academic & Enrollment Details</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>University Name <span class="required">*</span></label>
+                    <input type="text" id="universityName" placeholder="e.g., NUST, LUMS, UET Lahore">
+                </div>
+                <div class="form-group">
+                    <label>HEC Recognized? <span class="required">*</span></label>
+                    <select id="hecRecognized">
+                        <option value="yes">Yes, HEC recognized</option>
+                        <option value="no">No / Not sure</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Registration / Roll Number <span class="required">*</span></label>
+                    <input type="text" id="registrationNumber" placeholder="2024-BCS-001">
+                </div>
+                <div class="form-group">
+                    <label>Program / Field of Study <span class="required">*</span></label>
+                    <select id="program">
+                        <option value="">Select field</option>
+                        <option>Computer Science</option><option>Engineering</option><option>Business</option>
+                        <option>Humanities</option><option>Medicine</option><option>Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Current Semester / Year <span class="required">*</span></label>
+                    <input type="text" id="currentSemester" placeholder="5th Semester">
+                </div>
+                <div class="form-group">
+                    <label>Semesters Completed (number) <span class="required">*</span></label>
+                    <input type="number" id="semestersCompleted" placeholder="At least 1 semester">
+                </div>
+                <div class="form-group">
+                    <label>CGPA (out of 4.0) <span class="required">*</span></label>
+                    <input type="number" step="0.01" id="cgpa" placeholder="e.g., 2.5">
+                </div>
+                <div class="form-group">
+                    <label>Number of backlogs / failed subjects <span class="required">*</span></label>
+                    <input type="number" id="backlogs" placeholder="Max 2 allowed">
+                </div>
+                <div class="form-group">
+                    <label>Semester Fee Needed (PKR) <span class="required">*</span></label>
+                    <input type="number" id="semesterFee" placeholder="10,000 - 300,000">
+                </div>
+                <div class="form-group">
+                    <label>Currently receiving any other scholarship?</label>
+                    <select id="otherScholarship">
+                        <option value="no">No</option>
+                        <option value="yes">Yes (HEC / University / Other)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- FINANCIAL & FAMILY -->
+        <div class="form-section">
+            <h2>💰 Financial & Family Background</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Family Monthly Income (PKR) <span class="required">*</span></label>
+                    <select id="familyIncome">
+                        <option value="">Select range</option>
+                        <option value="below25k">Below PKR 25,000</option>
+                        <option value="25k-50k">PKR 25,000 - 50,000</option>
+                        <option value="above50k">Above PKR 50,000</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Father/Guardian Employment Status</label>
+                    <select id="guardianStatus">
+                        <option value="employed">Employed</option>
+                        <option value="unemployed">Unemployed</option>
+                        <option value="deceased">Deceased</option>
+                        <option value="disabled">Disabled</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Number of family members</label>
+                    <input type="number" id="familyMembers" placeholder="e.g., 5">
+                </div>
+                <div class="form-group">
+                    <label>Number of siblings currently studying</label>
+                    <input type="number" id="studyingSiblings" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label>Do you have a job? If yes, monthly income (PKR)</label>
+                    <select id="jobStatus">
+                        <option value="nojob">No job</option>
+                        <option value="below25k">Employed, income below 25,000</option>
+                        <option value="above25k">Employed, income above 25,000</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Gender (for priority awareness)</label>
+                    <select id="gender">
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Area background</label>
+                    <select id="areaType">
+                        <option value="urban">Urban/City</option>
+                        <option value="rural">Rural/Remote area</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- REASON & VERIFICATION -->
+        <div class="form-section">
+            <h2>📄 Statement & Documents</h2>
+            <div class="form-grid">
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Why Do You Need This Support? <span class="required">*</span></label>
+                    <textarea id="scholarshipReason" rows="3" placeholder="Tell us about your financial situation and family background..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>University Official Email (for verification) <span class="required">*</span></label>
+                    <input type="email" id="universityEmail" placeholder="registrar@university.edu.pk">
+                    <div class="hint-text">Must be valid university domain email</div>
+                </div>
+                <div class="verification-text">
+                    <strong>🔍 Verification Process:</strong> We will email your university to confirm enrollment using your roll number. Ensure correct university email.
+                </div>
+                <div class="priority-note">
+                    <strong>⚡ Priority Order:</strong> Orphan > Parent disabled/ill > Income <25k > Single parent > Multiple siblings studying > Rural area > Female student.
+                </div>
+            </div>
+        </div>
+
+        <!-- UPLOAD SECTION -->
+        <div class="upload-container">
+            <div class="upload-label">
+                <span>📎 Upload Required Documents *</span>
+                <p>Fee challan (current semester), CNIC copy, enrollment/admission letter</p>
+                <div class="upload-box" onclick="document.getElementById('file-upload').click()">
+                    <input type="file" id="file-upload" multiple style="display: none;" accept=".pdf,.jpg,.jpeg,.png">
+                    <div class="upload-icon">⬆️</div>
+                    <p>Drag & drop or click to upload<br>PDF, JPG, PNG (max 5 files, 25 MB each)</p>
+                </div>
+            </div>
+            <button type="button" class="submit-btn" id="submitBtn">Submit Application →</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Helper to show field-level error
+    function showFieldError(fieldId, message) {
+        const field = document.getElementById(fieldId);
+        if (!field) return;
+        field.classList.add('invalid');
+        let errorSpan = field.parentNode.querySelector('.error-msg');
+        if (!errorSpan) {
+            errorSpan = document.createElement('div');
+            errorSpan.className = 'error-msg';
+            field.parentNode.appendChild(errorSpan);
+        }
+        errorSpan.innerText = message;
+        errorSpan.style.display = 'block';
+    }
+
+    function clearFieldError(fieldId) {
+        const field = document.getElementById(fieldId);
+        if (field) field.classList.remove('invalid');
+        const errorSpan = field.parentNode?.querySelector('.error-msg');
+        if (errorSpan) errorSpan.style.display = 'none';
+    }
+
+    function clearAllErrors() {
+        const allFields = ['fullName','email','cnic','phone','age','universityName','hecRecognized','registrationNumber','semestersCompleted','cgpa','backlogs','semesterFee','familyIncome','otherScholarship','jobStatus','guardianStatus','universityEmail'];
+        allFields.forEach(id => clearFieldError(id));
+        const banner = document.getElementById('globalAlert');
+        banner.style.display = 'none';
+        banner.innerHTML = '';
+    }
+
+    // ----- Enhanced validators -----
+    function isValidName(name) {
+        // Strictly reject any digit (0-9). Only letters (English/Urdu range), spaces, and dots allowed.
+        // Also reject special symbols like @#$%^&* etc.
+        const nameRegex = /^[A-Za-zآ-ی\s\.]+$/;
+        // Also ensure no digit anywhere in string
+        if (/\d/.test(name)) return false;
+        return nameRegex.test(name) && name.trim().length >= 3;
+    }
+
+    function isValidWhatsApp(phone) {
+        const phoneRegex = /^03\d{9}$/;
+        return phoneRegex.test(phone);
+    }
+
+    function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    function isValidCNIC(cnic) {
+        const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
+        return cnicRegex.test(cnic);
+    }
+    
+    // Automatic eligibility check + field validation
+    function validateEligibility() {
+        clearAllErrors();
+        let isValid = true;
+
+        // ---- NAME: Must NOT accept numbers ----
+        const fullName = document.getElementById('fullName').value.trim();
+        if (!fullName) {
+            showFieldError('fullName', 'Full name is required.');
+            isValid = false;
+        } else if (/\d/.test(fullName)) {
+            // If any digit exists, show error immediately
+            showFieldError('fullName', '❌ Name cannot contain numbers. Please remove digits (0-9).');
+            isValid = false;
+        } else if (!isValidName(fullName)) {
+            showFieldError('fullName', 'Name must contain only letters, spaces, and dots (no special symbols or numbers).');
+            isValid = false;
+        }
+
+        // Email validation
+        const email = document.getElementById('email').value.trim();
+        if (!email) {
+            showFieldError('email', 'Email address is required.');
+            isValid = false;
+        } else if (!isValidEmail(email)) {
+            showFieldError('email', 'Enter a valid email address (e.g., name@example.com).');
+            isValid = false;
+        }
+
+        // CNIC validation
+        const cnic = document.getElementById('cnic').value.trim();
+        if (!cnic) {
+            showFieldError('cnic', 'CNIC number is required.');
+            isValid = false;
+        } else if (!isValidCNIC(cnic)) {
+            showFieldError('cnic', 'CNIC must follow format: 12345-1234567-1 (13 digits with hyphens).');
+            isValid = false;
+        }
+
+        // WhatsApp validation (11 digits, starts with 03)
+        const phone = document.getElementById('phone').value.trim();
+        if (!phone) {
+            showFieldError('phone', 'WhatsApp number is required.');
+            isValid = false;
+        } else if (!isValidWhatsApp(phone)) {
+            showFieldError('phone', 'WhatsApp number must be exactly 11 digits starting with 03 (e.g., 03001234567).');
+            isValid = false;
+        }
+
+        // CGPA validation
+        const cgpa = parseFloat(document.getElementById('cgpa').value);
+        if (isNaN(cgpa) || cgpa < 2.0) {
+            showFieldError('cgpa', '❌ CGPA must be at least 2.0 to be eligible.');
+            isValid = false;
+        } else if (cgpa > 4.0) {
+            showFieldError('cgpa', 'CGPA cannot exceed 4.0');
+            isValid = false;
+        }
+
+        // Already receiving scholarship
+        const otherScholarship = document.getElementById('otherScholarship').value;
+        if (otherScholarship === 'yes') {
+            showFieldError('otherScholarship', '❌ You are already receiving another scholarship. Qalam Aid supports students without other aid.');
+            isValid = false;
+        }
+
+        // Family income + special case
+        const income = document.getElementById('familyIncome').value;
+        const guardianStatus = document.getElementById('guardianStatus').value;
+        const specialGuardian = (guardianStatus === 'deceased' || guardianStatus === 'disabled' || guardianStatus === 'unemployed');
+        
+        if (!specialGuardian && income === 'above50k') {
+            showFieldError('familyIncome', '⚠️ Family income above PKR 50,000. Only eligible if guardian deceased/disabled/unemployed.');
+            if (guardianStatus !== 'deceased' && guardianStatus !== 'disabled' && guardianStatus !== 'unemployed') {
+                isValid = false;
+            }
+        } else if (!specialGuardian && (income === '' || income === null)) {
+            showFieldError('familyIncome', 'Please select family income range');
+            isValid = false;
+        }
+
+        // Fee range
+        const semesterFee = parseFloat(document.getElementById('semesterFee').value);
+        if (isNaN(semesterFee) || semesterFee < 10000 || semesterFee > 300000) {
+            showFieldError('semesterFee', 'Fee amount must be between PKR 10,000 and PKR 300,000 per semester.');
+            isValid = false;
+        }
+
+        // HEC recognized
+        const hecStatus = document.getElementById('hecRecognized').value;
+        if (hecStatus !== 'yes') {
+            showFieldError('hecRecognized', '❌ University must be HEC recognized to qualify.');
+            isValid = false;
+        }
+
+        // Completed semesters
+        const semestersCompleted = parseInt(document.getElementById('semestersCompleted').value);
+        if (isNaN(semestersCompleted) || semestersCompleted < 1) {
+            showFieldError('semestersCompleted', 'Must have completed at least 1 semester.');
+            isValid = false;
+        }
+
+        // Backlogs <=2
+        const backlogs = parseInt(document.getElementById('backlogs').value);
+        if (isNaN(backlogs) || backlogs > 2) {
+            showFieldError('backlogs', 'Maximum allowed failed subjects / backlogs is 2.');
+            isValid = false;
+        }
+
+        // Age
+        const age = parseInt(document.getElementById('age').value);
+        if (isNaN(age) || age < 17 || age > 30) {
+            showFieldError('age', 'Age must be between 17 and 30 years.');
+            isValid = false;
+        }
+
+        // Citizenship
+        const citizen = document.getElementById('citizen').value;
+        if (citizen !== 'yes') {
+            showFieldError('citizen', 'Only Pakistani citizens with valid CNIC are eligible.');
+            isValid = false;
+        }
+
+        // Job condition
+        const jobStatus = document.getElementById('jobStatus').value;
+        if (jobStatus === 'above25k') {
+            showFieldError('jobStatus', 'Monthly job income exceeds PKR 25,000. Only students with no job or income <25k/month qualify.');
+            isValid = false;
+        }
+
+        // University email
+        const uniEmail = document.getElementById('universityEmail').value.trim();
+        if (!uniEmail) {
+            showFieldError('universityEmail', 'University official email is required for verification.');
+            isValid = false;
+        } else if (!isValidEmail(uniEmail)) {
+            showFieldError('universityEmail', 'Provide a valid university email address (e.g., registrar@uni.edu.pk).');
+            isValid = false;
+        }
+
+        // Other required fields
+        const requiredTexts = ['universityName', 'registrationNumber', 'currentSemester'];
+        for (let id of requiredTexts) {
+            const val = document.getElementById(id).value.trim();
+            if (!val) {
+                showFieldError(id, 'This field is required.');
+                isValid = false;
+            }
+        }
+
+        return isValid;
+    }
+
+   window.submitApplication = async function() {
+    const isValid = validateEligibility();
+    if (!isValid) {
+        const banner = document.getElementById('globalAlert');
+        banner.innerHTML = '⚠️ Please fix the errors above before submitting.';
+        banner.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+    }
+
+    const files = document.getElementById('file-upload').files;
+    if (files.length === 0) {
+        alert('📁 Please upload required documents.');
+        return;
+    }
+    const maxBytes = 25 * 1024 * 1024;
+    for (let i = 0; i < files.length; i++) {
+        if (files[i].size > maxBytes) {
+            alert('❌ "' + files[i].name + '" is too large. Each file must be 25 MB or less.');
+            return;
+        }
+    }
+
+    const guardian  = document.getElementById('guardianStatus').value;
+    const incomeVal = document.getElementById('familyIncome').value;
+    const siblings  = parseInt(document.getElementById('studyingSiblings').value) || 0;
+    const area      = document.getElementById('areaType').value;
+    const gender    = document.getElementById('gender').value;
+
+    let priorityLevel = "Standard";
+    if (guardian === 'deceased')        priorityLevel = "1st Priority (Orphan/Parent deceased)";
+    else if (guardian === 'disabled')   priorityLevel = "2nd Priority (Parent disabled/ill)";
+    else if (incomeVal === 'below25k')  priorityLevel = "3rd Priority (Family income below 25k)";
+    else if (guardian === 'unemployed') priorityLevel = "4th Priority (Unemployed guardian)";
+    else if (siblings >= 3)             priorityLevel = "5th Priority (3+ siblings studying)";
+    else if (area === 'rural')          priorityLevel = "6th Priority (Rural background)";
+    else if (gender === 'female')       priorityLevel = "7th Priority (Female student)";
+
+    const formData = new FormData();
+    formData.append('fullName',           document.getElementById('fullName').value.trim());
+    formData.append('email',              document.getElementById('email').value.trim());
+    formData.append('cnic',               document.getElementById('cnic').value.trim());
+    formData.append('phone',              document.getElementById('phone').value.trim());
+    formData.append('age',                document.getElementById('age').value);
+    formData.append('universityName',     document.getElementById('universityName').value.trim());
+    formData.append('hecRecognized',      document.getElementById('hecRecognized').value);
+    formData.append('registrationNumber', document.getElementById('registrationNumber').value.trim());
+    formData.append('program',            document.getElementById('program').value);
+    formData.append('currentSemester',    document.getElementById('currentSemester').value.trim());
+    formData.append('semestersCompleted', document.getElementById('semestersCompleted').value);
+    formData.append('cgpa',               document.getElementById('cgpa').value);
+    formData.append('backlogs',           document.getElementById('backlogs').value);
+    formData.append('semesterFee',        document.getElementById('semesterFee').value);
+    formData.append('otherScholarship',   document.getElementById('otherScholarship').value);
+    formData.append('familyIncome',       document.getElementById('familyIncome').value);
+    formData.append('guardianStatus',     guardian);
+    formData.append('familyMembers',      document.getElementById('familyMembers').value);
+    formData.append('studyingSiblings',   document.getElementById('studyingSiblings').value);
+    formData.append('jobStatus',          document.getElementById('jobStatus').value);
+    formData.append('gender',             gender);
+    formData.append('areaType',           area);
+    formData.append('scholarshipReason',  document.getElementById('scholarshipReason').value.trim());
+    formData.append('universityEmail',    document.getElementById('universityEmail').value.trim());
+    formData.append('priorityLevel',      priorityLevel);
+
+    for (let i = 0; i < files.length; i++) {
+        formData.append('documents', files[i]);
+    }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerText = 'Submitting... please wait';
+
+    try {
+        const res  = await fetch('http://localhost:5000/api/apply', {
+            method: 'POST',
+            body: formData
+        });
+        let data = {};
+        try {
+            data = await res.json();
+        } catch {
+            data = { message: 'Server returned an invalid response (status ' + res.status + ')' };
+        }
+
+        if (res.ok) {
+            alert(
+                `✅ Application submitted successfully!\n\n` +
+                `📌 Priority: ${priorityLevel}\n\n` +
+                `📧 Verification email sent to your university.\n` +
+                `📱 We will contact you on WhatsApp: ${document.getElementById('phone').value}`
+            );
+            document.getElementById('scholarshipForm').reset();
+            btn.disabled = false;
+            btn.innerText = 'Submit Application →';
+        } else {
+            alert('❌ ' + (data.message || 'Request failed (HTTP ' + res.status + ')'));
+            btn.disabled = false;
+            btn.innerText = 'Submit Application →';
+        }
+
+    } catch (err) {
+        alert(
+            '❌ Could not reach the API at http://localhost:5000\n\n' +
+            (err.message || 'Network error') + '\n\n' +
+            '• Backend must run: cd backend → npm start\n' +
+            '• Each uploaded file must be under 25 MB'
+        );
+        btn.disabled = false;
+        btn.innerText = 'Submit Application →';
+    }
+};
+
+    document.getElementById('submitBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        submitApplication();
+    });
+
+    // Real-time error clearing
+    const allInputs = document.querySelectorAll('input, select, textarea');
+    allInputs.forEach(field => {
+        field.addEventListener('focus', () => {
+            if (field.id) clearFieldError(field.id);
+        });
+    });
+
+    // CNIC auto-formatting
+    const cnicInput = document.getElementById('cnic');
+    if (cnicInput) {
+        cnicInput.addEventListener('input', function(e) {
+            let raw = this.value.replace(/-/g, '');
+            if (raw.length > 13) raw = raw.slice(0,13);
+            let formatted = '';
+            if (raw.length > 0) formatted = raw.slice(0,5);
+            if (raw.length >= 6) formatted += '-' + raw.slice(5,12);
+            if (raw.length >= 12) formatted += '-' + raw.slice(12,13);
+            if (formatted !== this.value) this.value = formatted;
+        });
+    }
+
+    // Phone: only digits and max 11
+    const phoneInput = document.getElementById('phone');
+    phoneInput.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '').slice(0,11);
+    });
+    
+    // CGPA max
+    document.getElementById('cgpa').addEventListener('input', function() {
+        if (this.value > 4.0) this.value = 4.0;
+    });
+
+    // Real-time name validation while typing: block number keys visually and show error instantly
+    const nameField = document.getElementById('fullName');
+    nameField.addEventListener('input', function() {
+        const hasNumber = /\d/.test(this.value);
+        if (hasNumber) {
+            showFieldError('fullName', '❌ Numbers are not allowed in name. Please remove digits.');
+            this.classList.add('invalid');
+        } else {
+            clearFieldError('fullName');
+            if (this.value.trim().length >= 3 && isValidName(this.value.trim())) {
+                this.classList.remove('invalid');
+            }
+        }
+    });
+</script>
+</body>
+</html>

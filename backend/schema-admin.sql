@@ -1,0 +1,4 @@
+-- Optional: if status columns are ENUM and reject 'rejected' / 'cancelled', widen them:
+-- ALTER TABLE applications MODIFY COLUMN status VARCHAR(32) NOT NULL DEFAULT 'pending';
+-- ALTER TABLE students MODIFY COLUMN status VARCHAR(32) NOT NULL DEFAULT 'pending';
+-- ALTER TABLE donations MODIFY COLUMN status VARCHAR(32) NOT NULL DEFAULT 'initiated';

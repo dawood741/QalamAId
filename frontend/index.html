@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Qalam Aid</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background-image: url('Education.jpg');
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Dark overlay */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.60);
+      z-index: 0;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 48px;
+      background: rgba(0,0,0,0.25);
+      backdrop-filter: blur(6px);
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .nav-brand {
+      color: white;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      text-decoration: none;
+    }
+
+    .nav-links {
+      list-style: none;
+      display: flex;
+      gap: 4px;
+    }
+
+    .nav-links li a {
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 7px 12px;
+      border-radius: 7px;
+      transition: all 0.2s;
+    }
+    .nav-links li a:hover {
+      color: white;
+      background: rgba(255,255,255,0.1);
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Sign In — ghost/outline */
+    .btn-signin {
+      padding: 9px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: transparent;
+      color: white;
+      border: 1.5px solid rgba(255,255,255,0.55);
+    }
+    .btn-signin:hover {
+      background: rgba(255,255,255,0.12);
+      border-color: white;
+    }
+
+    /* Sign Up — solid green */
+    .btn-signup {
+      padding: 9px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #065f46;
+      color: white;
+      border: none;
+    }
+    .btn-signup:hover {
+      background: #047857;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(6,95,70,0.5);
+    }
+
+    /* ── HERO ── */
+    .content {
+      position: relative;
+      z-index: 10;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px 24px;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 4.5vw, 3.2rem);
+      font-weight: 700;
+      color: white;
+      line-height: 1.2;
+      margin-bottom: 18px;
+      max-width: 680px;
+      text-shadow: 0 2px 20px rgba(0,0,0,0.35);
+    }
+
+    p {
+      font-size: 1.1rem;
+      color: rgba(255,255,255,0.80);
+      margin-bottom: 40px;
+      max-width: 540px;
+      line-height: 1.7;
+    }
+
+    /* ── ACTION BUTTONS ── */
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 14px 32px;
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: 'DM Sans', sans-serif;
+      border: none;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    /* Apply for Scholarship — solid green */
+    .apply-btn {
+      background: #065f46;
+      color: white;
+      box-shadow: 0 4px 18px rgba(6,95,70,0.45);
+    }
+    .apply-btn:hover {
+      background: #047857;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(6,95,70,0.55);
+    }
+
+    /* Tap to Donate — white with green text */
+    .donate-btn {
+      background: white;
+      color: #065f46;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.2);
+    }
+    .donate-btn:hover {
+      background: #f0fdf4;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+
+    /* ── BOTTOM FOOTER ── */
+    .footer {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 14px;
+      color: rgba(255,255,255,0.35);
+      font-size: 12px;
+    }
+
+    @media (max-width: 640px) {
+      nav { padding: 14px 20px; }
+      .nav-links { display: none; }
+      .btn { padding: 12px 24px; font-size: 0.95rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="overlay"></div>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-left">
+      <a class="nav-brand" href="home.html">Qalam Aid</a>
+      <ul class="nav-links">
+        <li><a href="about.html">About Us</a></li>
+        <li><a href="howitworks.html">How It Works</a></li>
+        <li><a href="browsestudents.html">Browse Students</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+    </div>
+    <div class="nav-right">
+      <button class="btn-signin" onclick="location.href='login.html'">Sign In</button>
+      <button class="btn-signup" onclick="location.href='login.html'">Sign Up</button>
+    </div>
+  </nav>
+
+  <!-- HERO CONTENT -->
+  <div class="content">
+    <h1>Don't Let Finances End a Student's Dream</h1>
+    <p>
+      Qalam Aid prevents university dropouts by connecting verified students
+      with generous donors. Payments go directly to universities via Easypaisa.
+    </p>
+    <div class="buttons">
+      <button class="btn apply-btn" onclick="location.href='signup.html'">
+        🎓 Apply for Scholarship
+      </button>
+      <button class="btn donate-btn" onclick="location.href='signup.html'">
+        💚 Tap to Donate
+      </button>
+    </div>
+  </div>
+
+  <div class="footer">© 2026 Qalam Aid — Preventing dropout through dignity</div>
+
+</body>
+</html>

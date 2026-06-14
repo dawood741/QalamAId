@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard — Qalam Aid</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --green:       #065f46;
+            --green-mid:   #047857;
+            --green-light: #d1fae5;
+            --green-pale:  #f0fdf4;
+            --amber:       #d97706;
+            --amber-light: #fef3c7;
+            --blue:        #1d4ed8;
+            --blue-light:  #dbeafe;
+            --red:         #dc2626;
+            --red-light:   #fee2e2;
+            --text:        #0f172a;
+            --text2:       #334155;
+            --muted:       #64748b;
+            --border:      #e2e8f0;
+            --card:        #ffffff;
+            --bg:          #f8fafc;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            position:fixed; top:0; left:0;
+            width:240px; height:100vh;
+            background:var(--green);
+            display:flex; flex-direction:column;
+            z-index:100;
+        }
+        .sidebar-logo { padding:28px 24px 20px; border-bottom:1px solid rgba(255,255,255,0.1); }
+        .sidebar-logo h2 { color:white; font-size:20px; font-weight:700; letter-spacing:-0.3px; }
+        .sidebar-logo p  { color:rgba(255,255,255,0.55); font-size:12px; margin-top:2px; }
+        .sidebar-nav { flex:1; padding:20px 12px; overflow-y:auto; }
+        .nav-label {
+            font-size:10px; font-weight:600;
+            color:rgba(255,255,255,0.4);
+            letter-spacing:1.5px; text-transform:uppercase;
+            padding:0 12px; margin:16px 0 8px;
+        }
+        .nav-item {
+            display:flex; align-items:center; gap:10px;
+            padding:10px 12px; border-radius:8px;
+            color:rgba(255,255,255,0.75);
+            text-decoration:none; font-size:14px; font-weight:500;
+            transition:all 0.15s; cursor:pointer;
+        }
+        .nav-item:hover  { background:rgba(255,255,255,0.1); color:white; }
+        .nav-item.active { background:rgba(255,255,255,0.18); color:white; }
+        .nav-icon { font-size:16px; width:20px; text-align:center; }
+        .sidebar-bottom { padding:16px 12px; border-top:1px solid rgba(255,255,255,0.1); }
+        .sidebar-user { display:flex; align-items:center; gap:10px; padding:10px 12px; }
+        .user-avatar {
+            width:36px; height:36px; border-radius:50%;
+            background:rgba(255,255,255,0.22); color:white;
+            font-size:13px; font-weight:700;
+            display:flex; align-items:center; justify-content:center; flex-shrink:0;
+        }
+        .user-name { color:white; font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .user-role { color:rgba(255,255,255,0.5); font-size:11px; }
+        .logout-btn {
+            width:100%; margin-top:8px;
+            background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.8);
+            border:1px solid rgba(255,255,255,0.2); border-radius:8px;
+            padding:9px 12px; font-size:13px; font-weight:600;
+            cursor:pointer; font-family:'DM Sans',sans-serif;
+            transition:all 0.15s; text-align:left;
+            display:flex; align-items:center; gap:8px;
+        }
+        .logout-btn:hover { background:rgba(255,255,255,0.18); color:white; }
+
+        /* ── Main ── */
+        .main { margin-left:240px; min-height:100vh; }
+        .topbar {
+            background:white; border-bottom:1px solid var(--border);
+            padding:16px 32px;
+            display:flex; align-items:center; justify-content:space-between;
+            position:sticky; top:0; z-index:50;
+        }
+        .topbar-left h1 { font-size:18px; font-weight:700; }
+        .topbar-left p  { font-size:13px; color:var(--muted); margin-top:2px; }
+        .topbar-right   { font-size:13px; color:var(--muted); }
+
+        .content { padding:28px 32px; }
+
+        /* ── Status Banner ── */
+        .status-banner {
+            border-radius:14px; padding:20px 24px; margin-bottom:24px;
+            display:flex; align-items:center; gap:16px;
+        }
+        .status-banner.pending  { background:var(--amber-light); border:1px solid #fcd34d; }
+        .status-banner.verified { background:var(--green-light); border:1px solid #6ee7b7; }
+        .status-banner.rejected { background:var(--red-light);   border:1px solid #fca5a5; }
+        .status-banner.funded   { background:#dbeafe;             border:1px solid #93c5fd; }
+        .status-icon { font-size:34px; flex-shrink:0; }
+        .status-banner h3 { font-size:16px; font-weight:700; margin-bottom:4px; }
+        .status-banner p  { font-size:13px; line-height:1.6; }
+        .status-banner.pending  h3 { color:#92400e; } .status-banner.pending  p { color:#b45309; }
+        .status-banner.verified h3 { color:var(--green); } .status-banner.verified p { color:#047857; }
+        .status-banner.rejected h3 { color:var(--red); }  .status-banner.rejected p { color:#b91c1c; }
+        .status-banner.funded   h3 { color:var(--blue); }  .status-banner.funded   p { color:#1e40af; }
+
+        /* ── Stats ── */
+        .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px; }
+        .stat-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px; }
+        .stat-label { font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; }
+        .stat-value { font-size:26px; font-weight:700; color:var(--text); font-family:'DM Mono',monospace; line-height:1.1; }
+        .stat-sub   { font-size:12px; color:var(--muted); margin-top:5px; }
+        .stat-card.green .stat-value { color:var(--green); }
+        .stat-card.amber .stat-value { color:var(--amber); }
+        .stat-card.blue  .stat-value { color:var(--blue); }
+
+        /* ── Card ── */
+        .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:24px; margin-bottom:20px; }
+        .card-title { font-size:15px; font-weight:700; color:var(--text); margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+
+        /* ── Progress ── */
+        .progress-row { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:6px; }
+        .progress-track { height:10px; background:var(--green-light); border-radius:99px; overflow:hidden; }
+        .progress-fill  { height:100%; background:var(--green); border-radius:99px; transition:width 1s ease; }
+        .progress-footer { display:flex; justify-content:space-between; font-size:12px; margin-top:7px; }
+
+        /* ── Timeline ── */
+        .timeline { position:relative; padding-left:28px; }
+        .timeline::before { content:''; position:absolute; left:8px; top:6px; bottom:0; width:2px; background:var(--border); }
+        .tl-item { position:relative; padding-bottom:22px; }
+        .tl-item:last-child { padding-bottom:0; }
+        .tl-dot {
+            position:absolute; left:-24px; top:3px;
+            width:17px; height:17px; border-radius:50%;
+            border:2px solid var(--border); background:white;
+            display:flex; align-items:center; justify-content:center;
+        }
+        .tl-dot.done   { background:var(--green); border-color:var(--green); }
+        .tl-dot.active { background:var(--amber); border-color:var(--amber); animation:dotPulse 1.5s infinite; }
+        .tl-dot.done::after   { content:'✓'; color:white; font-size:9px; font-weight:700; }
+        .tl-dot.active::after { content:''; width:6px; height:6px; border-radius:50%; background:white; }
+        @keyframes dotPulse { 0%,100%{box-shadow:0 0 0 0 rgba(217,119,6,0.4);} 50%{box-shadow:0 0 0 6px rgba(217,119,6,0);} }
+        .tl-title { font-size:14px; font-weight:600; margin-bottom:3px; }
+        .tl-desc  { font-size:13px; color:var(--muted); line-height:1.5; }
+        .tl-time  { font-size:11px; color:var(--muted); margin-top:4px; font-family:'DM Mono',monospace; }
+
+        /* ── Profile Grid ── */
+        .profile-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+        .pf label { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:4px; }
+        .pf p     { font-size:14px; font-weight:500; color:var(--text); }
+
+        /* ── Badge ── */
+        .badge { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:99px; font-size:11px; font-weight:600; }
+        .badge.green    { background:var(--green-light); color:var(--green); }
+        .badge.amber    { background:var(--amber-light); color:var(--amber); }
+        .badge.red      { background:var(--red-light);   color:var(--red); }
+        .badge.blue     { background:var(--blue-light);  color:var(--blue); }
+
+        /* ── Loading / Error ── */
+        .spinner-wrap { text-align:center; padding:80px 40px; color:var(--muted); }
+        .spin { width:42px; height:42px; border:3px solid var(--green-light); border-top-color:var(--green); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 16px; }
+        @keyframes spin { to{transform:rotate(360deg);} }
+        .err-box { background:var(--red-light); border:1px solid #fca5a5; border-radius:12px; padding:20px 24px; color:var(--red); margin-bottom:20px; font-size:14px; }
+        .err-box strong { display:block; margin-bottom:4px; font-size:15px; }
+
+        /* ── Offline chip ── */
+        .offline-chip { background:var(--amber-light); border:1px solid #fcd34d; border-radius:8px; padding:10px 16px; font-size:13px; color:#92400e; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+
+        @media(max-width:768px) {
+            .sidebar { display:none; }
+            .main { margin-left:0; }
+            .stats-row { grid-template-columns:1fr; }
+            .profile-grid { grid-template-columns:1fr; }
+            .content { padding:20px 16px; }
+            .topbar { padding:14px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<div class="sidebar">
+    <div class="sidebar-logo">
+        <h2>Qalam Aid</h2>
+        <p>Student Portal</p>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-label">Menu</div>
+        <a class="nav-item active" href="studentdashboard.html">
+            <span class="nav-icon">📊</span> Dashboard
+        </a>
+        <a class="nav-item" href="Applyforscholarship.html">
+            <span class="nav-icon">📝</span> Apply / Reapply
+        </a>
+        <a class="nav-item" href="browsestudents.html">
+            <span class="nav-icon">👥</span> Browse Students
+        </a>
+        <a class="nav-item" href="home.html">
+            <span class="nav-icon">🏠</span> Home
+        </a>
+    </nav>
+    <div class="sidebar-bottom">
+        <div class="sidebar-user">
+            <div class="user-avatar" id="sidebarInitials">?</div>
+            <div style="flex:1;overflow:hidden;">
+                <div class="user-name" id="sidebarName">Loading…</div>
+                <div class="user-role">Student</div>
+            </div>
+        </div>
+        <button class="logout-btn" onclick="doLogout()">
+            <span>🚪</span> Sign Out
+        </button>
+    </div>
+</div>
+
+<!-- ── MAIN ── -->
+<div class="main">
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1>My Dashboard</h1>
+            <p id="topbarSub">Welcome back</p>
+        </div>
+        <div class="topbar-right" id="topbarDate"></div>
+    </div>
+
+    <div class="content" id="mainContent">
+        <div class="spinner-wrap">
+            <div class="spin"></div>
+            <p>Loading your dashboard…</p>
+        </div>
+    </div>
+</div>
+
+<script>
+const API = 'http://localhost:5000';
+
+/* Date */
+document.getElementById('topbarDate').innerText = new Date().toLocaleDateString('en-PK', {
+    weekday:'long', year:'numeric', month:'long', day:'numeric'
+});
+
+/* Logout */
+function doLogout() {
+    localStorage.clear();
+    window.location.href = 'login.html';
+}
+
+/* ── Load dashboard from GET /api/student-dashboard?email= ── */
+async function loadDashboard() {
+    const email = localStorage.getItem('studentEmail') || localStorage.getItem('userEmail');
+    if (!email) { window.location.href = 'login.html'; return; }
+
+    try {
+        const res  = await fetch(`${API}/api/student-dashboard?email=${encodeURIComponent(email)}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message);
+        renderDashboard(data, false);
+    } catch (err) {
+        /* Show demo data with offline notice */
+        renderDashboard(getDemoData(), true);
+    }
+}
+
+/* Demo data — mirrors exact DB field names from server.js query */
+function getDemoData() {
+    return {
+        name:              localStorage.getItem('userName') || 'Student',
+        email:             localStorage.getItem('studentEmail') || '',
+        university:        'NUST Islamabad',
+        program:           'BS Computer Science',
+        semester:          '6th Semester',
+        cgpa:              '3.10',
+        regNumber:         '2021-BCS-001',
+        studentStatus:     'verified',
+        applicationStatus: 'verified',
+        amountNeeded:      '85000',
+        amountRaised:      '35000',
+        priorityLevel:     '1st Priority (Orphan / Parent deceased)',
+        submittedAt:       '2026-04-10T10:30:00'
+    };
+}
+
+/* ── Render ── */
+function renderDashboard(d, isOffline) {
+    /* Sidebar */
+    const initials = (d.name || '?').split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
+    document.getElementById('sidebarInitials').innerText = initials;
+    document.getElementById('sidebarName').innerText     = d.name;
+    document.getElementById('topbarSub').innerText       = `Welcome back, ${d.name.split(' ')[0]}`;
+
+    /* Numbers */
+    const needed    = Number(d.amountNeeded)  || 0;
+    const raised    = Number(d.amountRaised)  || 0;
+    const remaining = Math.max(needed - raised, 0);
+    const percent   = needed > 0 ? Math.min(Math.round((raised / needed) * 100), 100) : 0;
+
+    /* Status config */
+    const STATUS = {
+        pending:  { cls:'pending',  icon:'⏳', title:'Application Under Review',
+                    msg:'Your application has been received. We emailed your university registrar to verify your enrollment. This usually takes 1–3 business days.' },
+        verified: { cls:'verified', icon:'✅', title:'Profile Verified & Live!',
+                    msg:'Your university confirmed your enrollment. Your profile is now visible to donors on the Browse Students page.' },
+        rejected: { cls:'rejected', icon:'❌', title:'Application Not Approved',
+                    msg:'Your application did not meet the criteria at this time. Please contact us at hello@qalamaid.org for more details.' },
+        funded:   { cls:'funded',   icon:'🎉', title:'Fully Funded — Congratulations!',
+                    msg:'Your semester fee has been fully funded! The university will receive the payment directly via Easypaisa.' }
+    };
+    const sc = STATUS[d.studentStatus] || STATUS.pending;
+
+    /* Timeline step states */
+    const isVerified = ['verified','funded'].includes(d.studentStatus);
+    const isFunded   = d.studentStatus === 'funded';
+
+    document.getElementById('mainContent').innerHTML = `
+
+        ${isOffline ? `<div class="offline-chip">⚠️ Server offline — showing demo data. Run: <strong style="margin-left:4px;">node server.js</strong></div>` : ''}
+
+        <!-- Status Banner -->
+        <div class="status-banner ${sc.cls}">
+            <div class="status-icon">${sc.icon}</div>
+            <div>
+                <h3>${sc.title}</h3>
+                <p>${sc.msg}</p>
+            </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="stats-row">
+            <div class="stat-card green">
+                <div class="stat-label">Amount Raised</div>
+                <div class="stat-value">PKR ${raised.toLocaleString()}</div>
+                <div class="stat-sub">of PKR ${needed.toLocaleString()} needed</div>
+            </div>
+            <div class="stat-card amber">
+                <div class="stat-label">Still Needed</div>
+                <div class="stat-value">PKR ${remaining.toLocaleString()}</div>
+                <div class="stat-sub">${percent}% funded so far</div>
+            </div>
+            <div class="stat-card blue">
+                <div class="stat-label">Priority Level</div>
+                <div class="stat-value" style="font-size:14px;margin-top:6px;line-height:1.4;">${d.priorityLevel || '—'}</div>
+                <div class="stat-sub">Based on your eligibility</div>
+            </div>
+        </div>
+
+        <!-- Funding Progress -->
+        <div class="card">
+            <div class="card-title">💰 Funding Progress</div>
+            <div class="progress-row">
+                <span>PKR ${raised.toLocaleString()} raised</span>
+                <span style="font-weight:700;color:var(--green);">${percent}%</span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill" id="progressBar" style="width:0%"></div>
+            </div>
+            <div class="progress-footer">
+                <span style="color:var(--green);font-weight:600;">Goal: PKR ${needed.toLocaleString()}</span>
+                <span style="color:var(--muted);">PKR ${remaining.toLocaleString()} remaining</span>
+            </div>
+        </div>
+
+        <!-- Application Timeline -->
+        <div class="card">
+            <div class="card-title">📋 Application Timeline</div>
+            <div class="timeline">
+                <div class="tl-item">
+                    <div class="tl-dot done"></div>
+                    <div class="tl-title">Application Submitted</div>
+                    <div class="tl-desc">Your form and documents were received by Qalam Aid.</div>
+                    ${d.submittedAt ? `<div class="tl-time">${new Date(d.submittedAt).toLocaleString('en-PK')}</div>` : ''}
+                </div>
+                <div class="tl-item">
+                    <div class="tl-dot done"></div>
+                    <div class="tl-title">Verification Email Sent to University</div>
+                    <div class="tl-desc">A secure verification link was emailed to your university registrar automatically.</div>
+                    <div class="tl-time">Within 1 hour of submission</div>
+                </div>
+                <div class="tl-item">
+                    <div class="tl-dot ${isVerified ? 'done' : 'active'}"></div>
+                    <div class="tl-title">University Verification ${isVerified ? '✓' : '(In Progress)'}</div>
+                    <div class="tl-desc">${isVerified
+                        ? 'Your university confirmed your enrollment by clicking the verification link.'
+                        : 'Waiting for the university registrar to click the verification link in the email.'
+                    }</div>
+                </div>
+                <div class="tl-item">
+                    <div class="tl-dot ${isVerified ? 'done' : ''}"></div>
+                    <div class="tl-title">Profile Visible to Donors ${isVerified ? '✓' : ''}</div>
+                    <div class="tl-desc">${isVerified
+                        ? 'Your profile is live on the Browse Students page. Donors can now fund you.'
+                        : 'Your profile will go live automatically once the university verifies you.'
+                    }</div>
+                </div>
+                <div class="tl-item">
+                    <div class="tl-dot ${isFunded ? 'done' : ''}"></div>
+                    <div class="tl-title">Fee Paid to University ${isFunded ? '✓' : '(Pending)'}</div>
+                    <div class="tl-desc">Once fully funded, donors pay directly to your university via Easypaisa. Zero cash is handled by you.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Summary -->
+        <div class="card">
+            <div class="card-title">🎓 Your Profile Information</div>
+            <div class="profile-grid">
+                <div class="pf"><label>Full Name</label><p>${d.name}</p></div>
+                <div class="pf"><label>Email</label><p>${d.email || '—'}</p></div>
+                <div class="pf"><label>University</label><p>${d.university || '—'}</p></div>
+                <div class="pf"><label>Program / Degree</label><p>${d.program || '—'}</p></div>
+                <div class="pf"><label>Current Semester</label><p>${d.semester || '—'}</p></div>
+                <div class="pf"><label>CGPA</label><p>${d.cgpa ? d.cgpa + ' / 4.0' : '—'}</p></div>
+                <div class="pf">
+                    <label>Registration Number</label>
+                    <p style="font-family:'DM Mono',monospace;font-size:13px;">${d.regNumber || '—'}</p>
+                </div>
+                <div class="pf"><label>Fee Needed</label><p style="color:var(--green);font-weight:700;">PKR ${needed.toLocaleString()}</p></div>
+                <div class="pf">
+                    <label>Application Status</label>
+                    <p>
+                        <span class="badge ${d.applicationStatus === 'verified' ? 'green' : d.applicationStatus === 'rejected' ? 'red' : 'amber'}">
+                            ${d.applicationStatus || 'pending'}
+                        </span>
+                    </p>
+                </div>
+                <div class="pf">
+                    <label>Student Status</label>
+                    <p>
+                        <span class="badge ${d.studentStatus === 'verified' ? 'green' : d.studentStatus === 'funded' ? 'blue' : d.studentStatus === 'rejected' ? 'red' : 'amber'}">
+                            ${d.studentStatus || 'pending'}
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    /* Animate progress bar */
+    setTimeout(() => {
+        const bar = document.getElementById('progressBar');
+        if (bar) bar.style.width = percent + '%';
+    }, 100);
+}
+
+loadDashboard();
+</script>
+</body>
+</html>

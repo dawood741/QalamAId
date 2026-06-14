@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — Qalam Aid</title>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+<div class="auth-left">
+    <div class="brand">
+        <a href="home.html">
+            <div class="brand-name">Qalam Aid</div>
+            <div class="brand-sub">Preventing dropout through dignity</div>
+        </a>
+    </div>
+    <div class="left-mid">
+        <h2 id="leftHeadline">Welcome back, <em>student</em></h2>
+        <p id="leftBlurb">Sign in to manage your scholarship application and track verification.</p>
+    </div>
+    <div class="left-foot">© 2026 Qalam Aid. All rights reserved.</div>
+</div>
+
+<div class="auth-right">
+    <div class="auth-box">
+        <a class="back-home" href="home.html">← Back to home</a>
+        <h1>Sign in</h1>
+        <p class="sub" id="pageSub">Log in as a student to access your dashboard</p>
+
+        <p style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:10px;">I am signing in as</p>
+        <div class="role-cards">
+            <button type="button" class="role-card active" id="cardStudent" data-role="student" aria-pressed="true">
+                <div class="rc-icon">🎓</div>
+                <div class="rc-title">Student</div>
+                <div class="rc-desc">Apply for aid & track your application</div>
+            </button>
+            <button type="button" class="role-card" id="cardDonor" data-role="donor" aria-pressed="false">
+                <div class="rc-icon">💚</div>
+                <div class="rc-title">Donor</div>
+                <div class="rc-desc">Browse students & manage donations</div>
+            </button>
+        </div>
+
+        <div class="alert" id="alertBox" role="alert"></div>
+
+        <form id="loginForm" novalidate>
+            <div class="fg">
+                <label for="email">Email address</label>
+                <div class="iw">
+                    <input type="email" id="email" name="email" placeholder="you@university.edu" autocomplete="email" required>
+                </div>
+                <div class="err-msg" id="eErr">Enter a valid email address</div>
+            </div>
+
+            <div class="fg">
+                <label for="pwd">Password</label>
+                <div class="iw">
+                    <input type="password" id="pwd" name="password" placeholder="Your password" autocomplete="current-password" required>
+                    <button type="button" class="eye" id="togglePwd" aria-label="Show password">👁</button>
+                </div>
+                <div class="err-msg" id="pErr">Enter your password</div>
+            </div>
+
+            <div class="fgt"><a href="forgot-password.html">Forgot password?</a></div>
+
+            <button type="submit" class="abtn" id="loginBtn">Sign in as Student</button>
+        </form>
+
+        <p class="swl">
+            Don't have an account?
+            <a href="signup.html?role=student" id="signupLink">Create a student account →</a>
+        </p>
+    </div>
+</div>
+
+<script src="js/auth.js"></script>
+<script>
+let role = 'student';
+
+function initRole() {
+    const fromUrl = QalamAuth.getRoleFromUrl();
+    const fromSession = sessionStorage.getItem('qalam_last_role');
+    if (fromUrl === 'donor' || fromUrl === 'student') role = fromUrl;
+    else if (fromSession === 'donor' || fromSession === 'student') role = fromSession;
+    applyRoleUI();
+}
+
+function applyRoleUI() {
+    const isStudent = role === 'student';
+    const cfg = QalamAuth.ROLES[role];
+
+    document.getElementById('cardStudent').classList.toggle('active', isStudent);
+    document.getElementById('cardDonor').classList.toggle('active', !isStudent);
+    document.getElementById('cardStudent').setAttribute('aria-pressed', isStudent);
+    document.getElementById('cardDonor').setAttribute('aria-pressed', !isStudent);
+
+    document.getElementById('leftHeadline').innerHTML =
+        isStudent ? 'Welcome back, <em>student</em>' : 'Welcome back, <em>donor</em>';
+    document.getElementById('leftBlurb').textContent = cfg.blurb;
+    document.getElementById('pageSub').textContent =
+        isStudent
+            ? 'Log in as a student to access your dashboard'
+            : 'Log in as a donor to browse students and give';
+    document.getElementById('loginBtn').textContent = `Sign in as ${cfg.label}`;
+    document.getElementById('signupLink').href = QalamAuth.signupUrl(role);
+    document.getElementById('signupLink').textContent =
+        isStudent ? 'Create a student account →' : 'Create a donor account →';
+
+    document.getElementById('email').placeholder = isStudent ? 'you@university.edu' : 'you@email.com';
+}
+
+function selectRole(r) {
+    role = QalamAuth.normalizeRole(r);
+    sessionStorage.setItem('qalam_last_role', role);
+    applyRoleUI();
+    hideAlert();
+}
+
+document.getElementById('cardStudent').addEventListener('click', () => selectRole('student'));
+document.getElementById('cardDonor').addEventListener('click', () => selectRole('donor'));
+
+document.getElementById('togglePwd').addEventListener('click', () => {
+    const input = document.getElementById('pwd');
+    const btn = document.getElementById('togglePwd');
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    btn.textContent = show ? '🙈' : '👁';
+    btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+});
+
+function showAlert(msg, type) {
+    const box = document.getElementById('alertBox');
+    box.textContent = msg;
+    box.className = 'alert ' + (type === 'error' ? 'err' : 'ok');
+    box.style.display = 'block';
+}
+
+function hideAlert() {
+    document.getElementById('alertBox').style.display = 'none';
+}
+
+function setFieldError(fieldId, errId, show) {
+    document.getElementById(fieldId).classList.toggle('er', show);
+    document.getElementById(errId).style.display = show ? 'block' : 'none';
+}
+
+function validate() {
+    const email = document.getElementById('email').value.trim();
+    const pwd = document.getElementById('pwd').value;
+    let ok = true;
+
+    setFieldError('email', 'eErr', false);
+    setFieldError('pwd', 'pErr', false);
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setFieldError('email', 'eErr', true);
+        ok = false;
+    }
+    if (!pwd) {
+        setFieldError('pwd', 'pErr', true);
+        ok = false;
+    }
+    return ok ? { email, pwd } : null;
+}
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = validate();
+    if (!data) return;
+
+    const btn = document.getElementById('loginBtn');
+    const label = `Sign in as ${QalamAuth.ROLES[role].label}`;
+    btn.disabled = true;
+    btn.textContent = 'Signing in…';
+    hideAlert();
+
+    try {
+        const result = await QalamAuth.login(data.email, data.pwd, role);
+        QalamAuth.saveSession(result, data.email);
+        showAlert('Success! Redirecting…', 'ok');
+        setTimeout(() => QalamAuth.redirectForRole(result.role), 400);
+    } catch (err) {
+        showAlert(err.message || 'Login failed', 'error');
+        btn.disabled = false;
+        btn.textContent = label;
+    }
+});
+
+initRole();
+</script>
+</body>
+</html>
