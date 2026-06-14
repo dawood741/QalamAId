@@ -1312,17 +1312,30 @@ app.get('/api/donor-dashboard', async (req, res) => {
         `, [donorId]);
 
         const [students] = await db.query(`
-            SELECT DISTINCT u.name, s.university_name as university,
+            SELECT u.name, s.university_name as university,
                    a.amount_needed as amountNeeded, s.status,
-                   COALESCE(SUM(d2.amount),0) as amountRaised,
-                   SUM(CASE WHEN dn.donor_id = ? THEN dn.amount ELSE 0 END) as myDonation
-            FROM donations dn
-            JOIN applications a ON a.id = dn.application_id
+                   COALESCE(raised.amountRaised, 0) as amountRaised,
+                   COALESCE(mine.myDonation, 0) as myDonation
+            FROM applications a
             JOIN students s ON s.id = a.student_id
             JOIN users u ON u.id = s.user_id
-            LEFT JOIN donations d2 ON d2.application_id = a.id AND d2.status = 'completed'
-            WHERE dn.donor_id = ?
-            GROUP BY s.id
+            LEFT JOIN (
+                SELECT application_id, SUM(amount) as amountRaised
+                FROM donations
+                WHERE status = 'completed'
+                GROUP BY application_id
+            ) raised ON raised.application_id = a.id
+            LEFT JOIN (
+                SELECT application_id, SUM(amount) as myDonation
+                FROM donations
+                WHERE donor_id = ?
+                GROUP BY application_id
+            ) mine ON mine.application_id = a.id
+            WHERE EXISTS (
+                SELECT 1 FROM donations dn
+                WHERE dn.application_id = a.id AND dn.donor_id = ?
+            )
+            ORDER BY a.submitted_at DESC, a.id DESC
         `, [donorId, donorId]);
 
         const totalDonated   = donations.reduce((sum, d) => sum + Number(d.amount), 0);
