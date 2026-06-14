@@ -365,13 +365,25 @@ function renderVerificationResult(result) {
       <p>Please contact Qalam Aid for assistance.</p></body></html>`;
 }
 
-// ── Email helper (Gmail SMTP) ─────────────────────────────────
+// ── Email helper (Resend API on Railway, Gmail SMTP locally) ─
 let mailTransporter = null;
 
 function getEmailCredentials() {
     const user = String(process.env.EMAIL_USER || '').trim();
     const pass = String(process.env.EMAIL_PASS || '').replace(/\s+/g, '');
     return { user, pass };
+}
+
+function getResendConfig() {
+    const apiKey = String(process.env.RESEND_API_KEY || '').trim();
+    const { user } = getEmailCredentials();
+    const from = String(process.env.RESEND_FROM || '').trim()
+        || (user ? `Qalam Aid <${user}>` : 'Qalam Aid <onboarding@resend.dev>');
+    return { apiKey, from };
+}
+
+function isResendEnabled() {
+    return Boolean(getResendConfig().apiKey);
 }
 
 function createMailTransporter() {
@@ -410,6 +422,10 @@ function resetMailTransporter() {
 }
 
 async function verifyMailConnection() {
+    if (isResendEnabled()) {
+        return { ok: true, provider: 'resend', from: getResendConfig().from };
+    }
+
     const { user, pass } = getEmailCredentials();
     if (!user || !pass || pass === 'your_16_char_app_password') {
         return { ok: false, error: 'EMAIL_USER / EMAIL_PASS not set in .env' };
@@ -418,30 +434,58 @@ async function verifyMailConnection() {
         const t = createMailTransporter();
         await t.verify();
         mailTransporter = t;
-        return { ok: true };
+        return { ok: true, provider: 'smtp' };
     } catch (err) {
         resetMailTransporter();
         return { ok: false, error: err.message };
     }
 }
 
-async function sendEmail(to, subject, html, options = {}) {
-    const { attachments = [], throwOnError = false } = options;
+async function sendEmailViaResend(to, subject, html, attachments = []) {
+    const { apiKey, from } = getResendConfig();
+    const payload = {
+        from,
+        to: Array.isArray(to) ? to : [to],
+        subject,
+        html
+    };
+
+    if (attachments.length) {
+        payload.attachments = attachments.map((a) => ({
+            filename: a.filename || 'attachment',
+            content: Buffer.isBuffer(a.content)
+                ? a.content.toString('base64')
+                : Buffer.from(a.content || '').toString('base64')
+        }));
+    }
+
+    const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+        const msg = data.message || data.error || JSON.stringify(data) || `Resend HTTP ${res.status}`;
+        throw new Error(msg);
+    }
+    return data;
+}
+
+async function sendEmailViaSmtp(to, subject, html, attachments = []) {
     const { user, pass } = getEmailCredentials();
 
     if (!user || !pass || pass === 'your_16_char_app_password') {
-        const msg = 'Email not configured (set EMAIL_USER and EMAIL_PASS in .env)';
-        console.log(`📧 Email skipped → To: ${to} | Subject: ${subject}`);
-        if (throwOnError) throw new Error(msg);
-        return { sent: false, error: msg };
+        throw new Error('Email not configured (set EMAIL_USER and EMAIL_PASS)');
     }
 
     const totalAttachMb = attachments.reduce((sum, a) => sum + (a.content?.length || 0), 0) / (1024 * 1024);
     if (totalAttachMb > 22) {
-        const msg = `Attachments too large (${totalAttachMb.toFixed(1)} MB). Gmail limit is ~25 MB total.`;
-        console.log(`⚠️ ${msg}`);
-        if (throwOnError) throw new Error(msg);
-        return { sent: false, error: msg };
+        throw new Error(`Attachments too large (${totalAttachMb.toFixed(1)} MB). Limit is ~25 MB.`);
     }
 
     const mailOptions = {
@@ -456,13 +500,12 @@ async function sendEmail(to, subject, html, options = {}) {
     for (let attempt = 1; attempt <= 2; attempt++) {
         try {
             await getMailTransporter().sendMail(mailOptions);
-            console.log(`✅ Email sent to ${to}` + (attachments.length ? ` (${attachments.length} attachment(s))` : ''));
-            return { sent: true };
+            return;
         } catch (err) {
             lastError = err;
             const retryable = /socket|timeout|ECONNRESET|ETIMEDOUT|ENETUNREACH|closed/i.test(err.message);
             if (attempt < 2 && retryable) {
-                console.log(`⚠️ Email attempt ${attempt} failed (${err.message}), retrying…`);
+                console.log(`⚠️ SMTP attempt ${attempt} failed (${err.message}), retrying…`);
                 resetMailTransporter();
                 await new Promise((r) => setTimeout(r, 1500));
                 continue;
@@ -470,10 +513,36 @@ async function sendEmail(to, subject, html, options = {}) {
             break;
         }
     }
+    throw lastError;
+}
 
-    console.log(`⚠️ Email failed: ${lastError.message}`);
-    if (throwOnError) throw lastError;
-    return { sent: false, error: lastError.message };
+async function sendEmail(to, subject, html, options = {}) {
+    const { attachments = [], throwOnError = false } = options;
+
+    if (!isResendEnabled()) {
+        const { user, pass } = getEmailCredentials();
+        if (!user || !pass || pass === 'your_16_char_app_password') {
+            const msg = 'Email not configured (set RESEND_API_KEY on Railway or EMAIL_USER/EMAIL_PASS locally)';
+            console.log(`📧 Email skipped → To: ${to} | Subject: ${subject}`);
+            if (throwOnError) throw new Error(msg);
+            return { sent: false, error: msg };
+        }
+    }
+
+    try {
+        if (isResendEnabled()) {
+            await sendEmailViaResend(to, subject, html, attachments);
+            console.log(`✅ Email sent via Resend to ${to}` + (attachments.length ? ` (${attachments.length} attachment(s))` : ''));
+        } else {
+            await sendEmailViaSmtp(to, subject, html, attachments);
+            console.log(`✅ Email sent via SMTP to ${to}` + (attachments.length ? ` (${attachments.length} attachment(s))` : ''));
+        }
+        return { sent: true };
+    } catch (err) {
+        console.log(`⚠️ Email failed: ${err.message}`);
+        if (throwOnError) throw err;
+        return { sent: false, error: err.message };
+    }
 }
 
 function buildUniversityVerificationHtml(data) {
@@ -1702,17 +1771,18 @@ async function startServer() {
 
     app.listen(process.env.PORT, async () => {
         console.log(`✅ Server running on port ${process.env.PORT}`);
-        const { user } = getEmailCredentials();
-        if (!user) {
-            console.log('📧 Email configured: No — emails will be skipped');
-            return;
-        }
         const check = await verifyMailConnection();
-        if (check.ok) {
-            console.log(`📧 Email configured: Yes (SMTP verified for ${user})`);
-        } else {
+        if (check.ok && check.provider === 'resend') {
+            console.log(`📧 Email configured: Yes (Resend API, from ${check.from})`);
+        } else if (check.ok) {
+            console.log(`📧 Email configured: Yes (Gmail SMTP for ${getEmailCredentials().user})`);
+        } else if (isResendEnabled()) {
+            console.log('📧 Email configured: Resend API key set');
+        } else if (getEmailCredentials().user) {
             console.log(`📧 Email configured: Yes, but SMTP verify failed: ${check.error}`);
-            console.log('   → Using Gmail SMTP port 465 (SSL) over IPv4. Check EMAIL_USER / EMAIL_PASS on Railway.');
+            console.log('   → On Railway, set RESEND_API_KEY (SMTP is often blocked). Get one at https://resend.com');
+        } else {
+            console.log('📧 Email configured: No — set RESEND_API_KEY (Railway) or EMAIL_USER/EMAIL_PASS (local)');
         }
     });
 }
