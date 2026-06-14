@@ -1654,13 +1654,6 @@ app.post('/api/auth/change-password', async (req, res) => {
     }
 });
 
-// ── Frontend (static HTML) ───────────────────────────────────
-const FRONTEND_DIR = path.join(__dirname, '..', 'frontend');
-app.use(express.static(FRONTEND_DIR));
-app.get('/', (req, res) => {
-    res.sendFile(path.join(FRONTEND_DIR, 'index.html'));
-});
-
 // ── Start server ─────────────────────────────────────────────
 async function startServer() {
     try {
