@@ -313,9 +313,12 @@ function renderDashboard(d, isOffline) {
     const raised    = Number(d.amountRaised)  || 0;
     const remaining = Math.max(needed - raised, 0);
     const percent   = needed > 0 ? Math.min(Math.round((raised / needed) * 100), 100) : 0;
+    const hasApplication = Boolean(d.applicationId || d.submittedAt || d.applicationStatus || needed > 0);
 
     /* Status config */
     const STATUS = {
+        notApplied: { cls:'pending',  icon:'⏳', title:'Application Not Submitted Yet',
+                    msg:'Your account is ready. Complete the scholarship application form so Qalam Aid can review your details and contact your university.' },
         pending:  { cls:'pending',  icon:'⏳', title:'Application Under Review',
                     msg:'Your application has been received. We emailed your university registrar to verify your enrollment. This usually takes 1–3 business days.' },
         verified: { cls:'verified', icon:'✅', title:'Profile Verified & Live!',
@@ -325,11 +328,11 @@ function renderDashboard(d, isOffline) {
         funded:   { cls:'funded',   icon:'🎉', title:'Fully Funded — Congratulations!',
                     msg:'Your semester fee has been fully funded! The university will receive the payment directly via Easypaisa.' }
     };
-    const sc = STATUS[d.studentStatus] || STATUS.pending;
+    const sc = hasApplication ? (STATUS[d.studentStatus] || STATUS.pending) : STATUS.notApplied;
 
     /* Timeline step states */
-    const isVerified = ['verified','funded'].includes(d.studentStatus);
-    const isFunded   = d.studentStatus === 'funded';
+    const isVerified = hasApplication && ['verified','funded'].includes(d.studentStatus);
+    const isFunded   = hasApplication && d.studentStatus === 'funded';
 
     document.getElementById('mainContent').innerHTML = `
 
@@ -384,23 +387,25 @@ function renderDashboard(d, isOffline) {
             <div class="card-title">📋 Application Timeline</div>
             <div class="timeline">
                 <div class="tl-item">
-                    <div class="tl-dot done"></div>
-                    <div class="tl-title">Application Submitted</div>
-                    <div class="tl-desc">Your form and documents were received by Qalam Aid.</div>
+                    <div class="tl-dot ${hasApplication ? 'done' : 'active'}"></div>
+                    <div class="tl-title">${hasApplication ? 'Application Submitted' : 'Scholarship Application Not Submitted'}</div>
+                    <div class="tl-desc">${hasApplication ? 'Your form and documents were received by Qalam Aid.' : 'Complete the application form and upload your documents to start university verification.'}</div>
                     ${d.submittedAt ? `<div class="tl-time">${new Date(d.submittedAt).toLocaleString('en-PK')}</div>` : ''}
                 </div>
                 <div class="tl-item">
-                    <div class="tl-dot done"></div>
-                    <div class="tl-title">Verification Email Sent to University</div>
-                    <div class="tl-desc">A secure verification link was emailed to your university registrar automatically.</div>
-                    <div class="tl-time">Within 1 hour of submission</div>
+                    <div class="tl-dot ${hasApplication ? 'done' : ''}"></div>
+                    <div class="tl-title">${hasApplication ? 'Verification Email Sent to University' : 'Verification Email Not Sent Yet'}</div>
+                    <div class="tl-desc">${hasApplication ? 'A secure verification link was emailed to your university registrar automatically.' : 'Qalam Aid sends the university verification email only after you submit the scholarship application.'}</div>
+                    ${hasApplication ? '<div class="tl-time">Within 1 hour of submission</div>' : ''}
                 </div>
                 <div class="tl-item">
-                    <div class="tl-dot ${isVerified ? 'done' : 'active'}"></div>
+                    <div class="tl-dot ${isVerified ? 'done' : hasApplication ? 'active' : ''}"></div>
                     <div class="tl-title">University Verification ${isVerified ? '✓' : '(In Progress)'}</div>
                     <div class="tl-desc">${isVerified
                         ? 'Your university confirmed your enrollment by clicking the verification link.'
-                        : 'Waiting for the university registrar to click the verification link in the email.'
+                        : hasApplication
+                            ? 'Waiting for the university registrar to click the verification link in the email.'
+                            : 'This step begins after your scholarship application is submitted.'
                     }</div>
                 </div>
                 <div class="tl-item">
@@ -433,12 +438,12 @@ function renderDashboard(d, isOffline) {
                     <label>Registration Number</label>
                     <p style="font-family:'DM Mono',monospace;font-size:13px;">${d.regNumber || '—'}</p>
                 </div>
-                <div class="pf"><label>Fee Needed</label><p style="color:var(--green);font-weight:700;">PKR ${needed.toLocaleString()}</p></div>
+                <div class="pf"><label>Fee Needed</label><p style="color:var(--green);font-weight:700;">${hasApplication ? 'PKR ' + needed.toLocaleString() : 'Not set yet'}</p></div>
                 <div class="pf">
                     <label>Application Status</label>
                     <p>
                         <span class="badge ${d.applicationStatus === 'verified' ? 'green' : d.applicationStatus === 'rejected' ? 'red' : 'amber'}">
-                            ${d.applicationStatus || 'pending'}
+                            ${hasApplication ? (d.applicationStatus || 'pending') : 'not submitted'}
                         </span>
                     </p>
                 </div>
@@ -453,6 +458,13 @@ function renderDashboard(d, isOffline) {
             </div>
         </div>
     `;
+
+    if (!hasApplication) {
+        const timelineTitles = document.querySelectorAll('.tl-title');
+        if (timelineTitles[2]) timelineTitles[2].textContent = 'University Verification (Not Started)';
+        if (timelineTitles[3]) timelineTitles[3].textContent = 'Profile Visible to Donors (Not Started)';
+        if (timelineTitles[4]) timelineTitles[4].textContent = 'Fee Paid to University (Not Started)';
+    }
 
     /* Animate progress bar */
     setTimeout(() => {

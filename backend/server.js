@@ -1262,6 +1262,7 @@ app.get('/api/student-dashboard', async (req, res) => {
                    s.department as program, s.semester, s.cgpa,
                    s.reg_number as regNumber, s.status as studentStatus,
                    s.priority_level as priorityLevel,
+                   a.id as applicationId,
                    a.status as applicationStatus, a.amount_needed as amountNeeded,
                    a.submitted_at as submittedAt,
                    COALESCE(SUM(d.amount),0) as amountRaised
